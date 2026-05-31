@@ -1,0 +1,256 @@
+// A to Z Celebrations - ASYNC API SIMULATION (js/api.js)
+
+const LATENCY_MIN = 300;
+const LATENCY_MAX = 600;
+
+// Helper to simulate network latency
+const simulateNetwork = (callback) => {
+    const delay = Math.floor(Math.random() * (LATENCY_MAX - LATENCY_MIN + 1)) + LATENCY_MIN;
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            try {
+                const res = callback();
+                resolve(res);
+            } catch (err) {
+                reject(err);
+            }
+        }, delay);
+    });
+};
+
+const API = {
+    // ----------------------------------------------------
+    // CUSTOMER ENDPOINTS
+    // ----------------------------------------------------
+    
+    // Fetch Cities
+    fetchCities() {
+        return simulateNetwork(() => window.AppDB.getCities());
+    },
+    
+    // Fetch Venues, optionally filtered by city
+    fetchVenues(cityId = null) {
+        return simulateNetwork(() => {
+            const venues = window.AppDB.getVenues();
+            return cityId ? venues.filter(v => v.cityId === cityId) : venues;
+        });
+    },
+    
+    // Fetch Add-ons
+    fetchAddons() {
+        return simulateNetwork(() => window.AppDB.getAddons());
+    },
+    
+    // Fetch Available Slots for a given Venue and Date
+    fetchSlotsAvailability(venueId, date) {
+        return simulateNetwork(() => {
+            const slots = window.AppDB.getSlots(venueId);
+            return slots.map(s => {
+                const isBooked = window.AppDB.isSlotBooked(venueId, date, s.id);
+                return { ...s, isBooked };
+            });
+        });
+    },
+    
+    // Validate Coupon Code
+    validateCoupon(code, purchaseAmount) {
+        return simulateNetwork(() => {
+            const coupons = window.AppDB.getCoupons();
+            const coupon = coupons.find(c => c.code.toUpperCase() === code.toUpperCase());
+            
+            if (!coupon) {
+                throw new Error("Invalid coupon code!");
+            }
+            if (purchaseAmount < coupon.minPurchase) {
+                throw new Error(`Minimum purchase of ₹${coupon.minPurchase} required for this coupon!`);
+            }
+            return coupon;
+        });
+    },
+    
+    // Create new Booking
+    createBooking(bookingInput) {
+        return simulateNetwork(() => {
+            // Check if slot has already been booked (pending or approved)
+            const isBooked = window.AppDB.isSlotBooked(bookingInput.venueId, bookingInput.date, bookingInput.slotId);
+            if (isBooked) {
+                throw new Error("This slot is already booked by another customer. Please select a different slot.");
+            }
+
+            // Generate Booking ID (AZC-YYYY-XXXX)
+            const year = new Date().getFullYear();
+            const random = Math.floor(1000 + Math.random() * 9000);
+            const bookingId = `AZC-${year}-${random}`;
+            
+            const newBooking = {
+                ...bookingInput,
+                id: bookingId,
+                status: "pending",
+                createdAt: new Date().toISOString()
+            };
+            
+            return window.AppDB.saveBooking(newBooking);
+        });
+    },
+    
+    // Track Booking (Customer)
+    trackBooking(bookingId, phone) {
+        return simulateNetwork(() => {
+            const bookings = window.AppDB.getBookings();
+            const b = bookings.find(x => x.id === bookingId && x.customerPhone === phone);
+            if (!b) {
+                throw new Error("No booking found with this ID and Phone Number combination.");
+            }
+            return b;
+        });
+    },
+
+    // Cancel Booking (Customer)
+    cancelCustomerBooking(bookingId, phone) {
+        return simulateNetwork(() => {
+            const bookings = window.AppDB.getBookings();
+            const b = bookings.find(x => x.id === bookingId && x.customerPhone === phone);
+            if (!b) {
+                throw new Error("Authentication failed. Cannot cancel booking.");
+            }
+            if (b.status === "cancelled" || b.status === "rejected") {
+                throw new Error("Booking is already cancelled.");
+            }
+            
+            // Allow cancelling pending or approved bookings
+            b.status = "cancelled";
+            window.AppDB.write("bookings", bookings);
+            return b;
+        });
+    },
+
+    // ----------------------------------------------------
+    // ADMIN ENDPOINTS
+    // ----------------------------------------------------
+    
+    // Admin Login Authentication
+    adminLogin(username, password) {
+        return simulateNetwork(() => {
+            const storedUser = localStorage.getItem("azc_admin_user") || "A2Z celebrations";
+            const storedPass = localStorage.getItem("azc_admin_pass") || "A2Z@celebrations";
+
+            if (username === storedUser && password === storedPass) {
+                const token = "token_" + Math.random().toString(36).substring(2);
+                sessionStorage.setItem("azc_auth_token", token);
+                return { success: true, token };
+            } else {
+                throw new Error("Invalid username or password!");
+            }
+        });
+    },
+
+    updateAdminCredentials(newUsername, newPassword) {
+        return simulateNetwork(() => {
+            if (!newUsername || !newPassword) {
+                throw new Error("Username and password cannot be empty.");
+            }
+            localStorage.setItem("azc_admin_user", newUsername);
+            localStorage.setItem("azc_admin_pass", newPassword);
+            return { success: true };
+        });
+    },
+    
+    // Admin Check Authentication State
+    checkAdminAuth() {
+        return sessionStorage.getItem("azc_auth_token") !== null;
+    },
+    
+    // Admin Logout
+    adminLogout() {
+        sessionStorage.removeItem("azc_auth_token");
+        return Promise.resolve(true);
+    },
+    
+    // Admin Get Bookings with Filters & Searching
+    fetchAdminBookings(filters = {}) {
+        return simulateNetwork(() => {
+            let bookings = window.AppDB.getBookings();
+            
+            // Apply Search Query (Name, Phone, ID)
+            if (filters.search) {
+                const q = filters.search.toLowerCase();
+                bookings = bookings.filter(b => 
+                    b.customerName.toLowerCase().includes(q) ||
+                    b.id.toLowerCase().includes(q) ||
+                    b.customerPhone.includes(q)
+                );
+            }
+            
+            // Apply Venue Filter
+            if (filters.venueId && filters.venueId !== "all") {
+                bookings = bookings.filter(b => b.venueId === filters.venueId);
+            }
+            
+            // Apply Status Filter
+            if (filters.status && filters.status !== "all") {
+                bookings = bookings.filter(b => b.status === filters.status);
+            }
+            
+            // Apply Date Filter
+            if (filters.date) {
+                bookings = bookings.filter(b => b.date === filters.date);
+            }
+            
+            return bookings;
+        });
+    },
+    
+    // Admin Update Booking Status (Approve / Reject)
+    updateBookingStatus(id, status) {
+        return simulateNetwork(() => {
+            const success = window.AppDB.updateBookingStatus(id, status);
+            if (!success) throw new Error("Booking not found!");
+            return { success, id, status };
+        });
+    },
+    
+    // Admin Update full Booking details
+    updateBookingDetails(booking) {
+        return simulateNetwork(() => {
+            const success = window.AppDB.updateBookingDetails(booking);
+            if (!success) throw new Error("Failed to update booking details!");
+            return { success, booking };
+        });
+    },
+    
+    // Admin Delete Booking
+    deleteBooking(id) {
+        return simulateNetwork(() => {
+            const success = window.AppDB.deleteBooking(id);
+            if (!success) throw new Error("Failed to delete booking!");
+            return { success, id };
+        });
+    },
+    
+    // Admin Fetch Analytics Stats & Charts Data
+    fetchAnalytics() {
+        return simulateNetwork(() => window.AppDB.getAnalytics());
+    },
+    
+    // Admin Save Venue (Add or Edit)
+    saveVenue(venue) {
+        return simulateNetwork(() => window.AppDB.saveVenue(venue));
+    },
+    
+    // Admin Delete Venue
+    deleteVenue(id) {
+        return simulateNetwork(() => window.AppDB.deleteVenue(id));
+    },
+    
+    // Admin Save Addon (Add or Edit)
+    saveAddon(addon) {
+        return simulateNetwork(() => window.AppDB.saveAddon(addon));
+    },
+    
+    // Admin Delete Addon
+    deleteAddon(id) {
+        return simulateNetwork(() => window.AppDB.deleteAddon(id));
+    }
+};
+
+window.AppAPI = API;
