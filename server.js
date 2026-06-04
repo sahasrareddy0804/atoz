@@ -553,6 +553,28 @@ app.post('/api/admin/update-credentials', async (req, res) => {
     }
 });
 
+// Intercept /js/, /css/, and /assets/ requests to support flat-file deployments (fallback to root folder)
+app.use((req, res, next) => {
+    const filePath = req.path;
+    const exactPath = path.join(__dirname, filePath);
+    try {
+        if (fs.existsSync(exactPath) && fs.statSync(exactPath).isFile()) {
+            return next();
+        }
+    } catch (e) {}
+
+    if (filePath.startsWith('/js/') || filePath.startsWith('/css/') || filePath.startsWith('/assets/')) {
+        const fileName = path.basename(filePath);
+        const rootPath = path.join(__dirname, fileName);
+        try {
+            if (fs.existsSync(rootPath) && fs.statSync(rootPath).isFile()) {
+                return res.sendFile(rootPath);
+            }
+        } catch (e) {}
+    }
+    next();
+});
+
 // Serve static assets from root folder
 app.use(express.static(path.join(__dirname)));
 
