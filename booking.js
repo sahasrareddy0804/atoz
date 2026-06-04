@@ -1,524 +1,1293 @@
-/* Reset & Box Model */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    outline: none;
-    -webkit-tap-highlight-color: transparent;
-}
+// A2Z CELEBRATIONS - BOOKING SYSTEM STATE ENGINE (js/booking.js)
 
-html {
-    scroll-behavior: smooth;
-    font-size: 16px;
-}
+const INITIAL_STATE = {
+    cityId: "",
+    cityName: "",
+    venueId: "",
+    venueName: "",
+    venuePrice: 0,
+    date: "",
+    slotId: "",
+    slotTime: "",
+    addons: [], // array of {id, name, price}
+    subtotal: 0,
+    discount: 0,
+    total: 0,
+    couponCode: "",
+    customerName: "",
+    customerEmail: "",
+    customerPhone: "",
+    occasion: "",
+    specialInstructions: "",
+    paymentScreenshot: "",
+    yourName: "",
+    partnerName: "",
+    standardDecorLabel: "",
+    decorationPrice: 0
+};
 
-body {
-    background-color: var(--bg-dark);
-    color: var(--text-primary);
-    font-family: var(--font-body);
-    line-height: 1.6;
-    overflow-x: hidden;
-    position: relative;
-}
-
-/* Scrollbar Styles */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: #f0eff5;
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(124, 58, 237, 0.15);
-    border-radius: var(--radius-full);
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--gold-primary);
-}
-
-/* Typography Utilities */
-h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-p {
-    font-family: var(--font-body);
-    color: var(--text-secondary);
-}
-
-a {
-    text-decoration: none;
-    color: inherit;
-    transition: var(--transition-fast);
-}
-
-/* Layout Elements */
-.container {
-    width: 100%;
-    max-width: var(--max-width);
-    margin: 0 auto;
-    padding: 0 24px;
-}
-
-section {
-    padding: 80px 0;
-    position: relative;
-}
-
-/* Elegant Text Shimmer & Gold Gradient */
-.gold-gradient-text {
-    background: linear-gradient(135deg, #f3e5ab 0%, #d4af37 50%, #aa7c11 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.section-title-wrapper {
-    text-align: center;
-    margin-bottom: 50px;
-}
-
-.section-subtitle {
-    font-family: var(--font-body);
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    color: var(--gold-primary);
-    margin-bottom: 10px;
-    display: inline-block;
-}
-
-.section-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    line-height: 1.2;
-}
-
-/* Glassmorphic Card base */
-.glass-card {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
-    box-shadow: var(--glass-shadow);
-    transition: var(--transition-normal);
-}
-
-.glass-card:hover {
-    background: var(--glass-bg-hover);
-    border-color: var(--glass-border-gold-hover);
-    transform: translateY(-5px);
-}
-
-/* Premium Buttons */
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 28px;
-    font-family: var(--font-body);
-    font-size: 0.95rem;
-    font-weight: 600;
-    border-radius: var(--radius-full);
-    cursor: pointer;
-    transition: var(--transition-normal);
-    gap: 8px;
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-dark) 100%);
-    color: #070709;
-    border: none;
-    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
-}
-
-.btn-primary:hover {
-    background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold-primary) 100%);
-    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
-    transform: translateY(-2px);
-}
-
-.btn-secondary {
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--text-primary);
-    border: 1px solid var(--glass-border);
-}
-
-.btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: var(--gold-primary);
-    color: var(--text-gold);
-    transform: translateY(-2px);
-}
-
-.btn-danger {
-    background: rgba(239, 68, 68, 0.1);
-    color: var(--danger);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.btn-danger:hover {
-    background: var(--danger);
-    color: #fff;
-    transform: translateY(-2px);
-}
-
-/* Form Inputs */
-.form-group {
-    margin-bottom: 20px;
-    position: relative;
-}
-
-.form-label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-}
-
-.form-control {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
-    padding: 12px 16px;
-    color: var(--text-primary);
-    font-family: var(--font-body);
-    font-size: 0.95rem;
-    transition: var(--transition-fast);
-}
-
-.form-control:focus {
-    border-color: var(--gold-primary);
-    background: rgba(255, 255, 255, 0.06);
-    box-shadow: 0 0 10px rgba(212, 175, 55, 0.15);
-}
-
-/* Header & Navigation */
-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 100;
-    transition: var(--transition-normal);
-    padding: 20px 0;
-}
-
-header.scrolled {
-    background: var(--bg-surface-glass);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border-bottom: 1px solid var(--glass-border);
-    padding: 12px 0;
-}
-
-.nav-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 1.5rem;
-    font-weight: 800;
-    font-family: var(--font-heading);
-    letter-spacing: 1px;
-}
-
-.logo span {
-    font-size: 1.5rem;
-}
-
-.nav-links {
-    display: flex;
-    align-items: center;
-    gap: 30px;
-    list-style: none;
-}
-
-.nav-link {
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    position: relative;
-    padding: 5px 0;
-}
-
-.nav-link::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background: var(--gold-primary);
-    transition: var(--transition-normal);
-}
-
-.nav-link:hover, .nav-link.active {
-    color: var(--text-primary);
-}
-
-.nav-link:hover::after, .nav-link.active::after {
-    width: 100%;
-}
-
-.mobile-menu-toggle {
-    display: none;
-    background: none;
-    border: none;
-    cursor: pointer;
-}
-
-.mobile-menu-toggle svg {
-    stroke: var(--text-primary);
-}
-
-/* Floating WhatsApp Widget */
-.whatsapp-widget {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 99;
-}
-
-.whatsapp-btn {
-    width: 60px;
-    height: 60px;
-    background: #25d366;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
-    cursor: pointer;
-    transition: var(--transition-normal);
-}
-
-.whatsapp-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 24px rgba(37, 211, 102, 0.6);
-}
-
-.whatsapp-chat-box {
-    position: absolute;
-    bottom: 75px;
-    right: 0;
-    width: 320px;
-    background: var(--bg-surface);
-    border: 1px solid var(--glass-border-gold);
-    border-radius: var(--radius-md);
-    box-shadow: var(--glass-shadow);
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-    animation: slideUp var(--transition-normal);
-}
-
-.whatsapp-chat-header {
-    background: linear-gradient(135deg, #128c7e 0%, #25d366 100%);
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.whatsapp-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    color: #128c7e;
-}
-
-.whatsapp-header-info h4 {
-    font-family: var(--font-body);
-    font-size: 0.95rem;
-    color: #fff;
-}
-
-.whatsapp-header-info p {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.whatsapp-chat-body {
-    padding: 20px;
-    background: #f0eff5;
-    max-height: 180px;
-}
-
-.whatsapp-message-bubble {
-    background: rgba(124, 58, 237, 0.04);
-    border: 1px solid var(--border-color);
-    padding: 12px 14px;
-    border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-}
-
-.whatsapp-chat-footer {
-    padding: 12px 16px;
-    background: var(--bg-surface);
-    border-top: 1px solid var(--border-color);
-}
-
-/* Toast Notifications */
-#toast-container {
-    position: fixed;
-    top: 30px;
-    right: 30px;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    max-width: 380px;
-    width: calc(100vw - 60px);
-}
-
-.toast {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px 20px;
-    border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.97);
-    backdrop-filter: blur(8px);
-    border-left: 4px solid var(--gold-primary);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    color: var(--text-primary);
-    transform: translateX(120%);
-    animation: toastSlideIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    transition: var(--transition-normal);
-}
-
-.toast.success { border-left-color: var(--success); }
-.toast.error { border-left-color: var(--danger); }
-.toast.info { border-left-color: var(--info); }
-.toast.warning { border-left-color: var(--warning); }
-
-.toast.fade-out {
-    transform: translateX(120%);
-    opacity: 0;
-}
-
-/* Dynamic Loader */
-.loader-wrapper {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #f7f6fb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    transition: opacity 0.5s ease;
-}
-
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 3px solid rgba(124, 58, 237, 0.1);
-    border-radius: 50%;
-    border-top-color: var(--gold-primary);
-    animation: spin 1s ease-in-out infinite;
-}
-
-/* Animations */
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-@keyframes toastSlideIn {
-    to { transform: translateX(0); }
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(15px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes pulseGold {
-    0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
-    70% { box-shadow: 0 0 0 15px rgba(212, 175, 55, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
-}
-
-/* Media Queries for Header */
-@media (max-width: 768px) {
-    .nav-links {
-        position: fixed;
-        top: 0;
-        right: -100%;
-        width: 280px;
-        height: 100vh;
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(20px);
-        flex-direction: column;
-        justify-content: center;
-        gap: 30px;
-        transition: var(--transition-normal);
-        z-index: 99;
-        border-left: 1px solid var(--glass-border);
-    }
-    
-    .nav-links.active {
-        right: 0;
-    }
-    
-    .mobile-menu-toggle {
-        display: block;
-        z-index: 100;
-    }
-    
-    section {
-        padding: 60px 0;
-    }
-    
-    .section-title {
-        font-size: 2rem;
+class BookingWizard {
+    constructor() {
+        this.state = { ...INITIAL_STATE };
+        this.currentStep = 1;
+        this.totalSteps = 6;
+        this.calendarDate = new Date(); // Month showing in calendar
+        this.isTransitioning = false;
     }
 
-    /* Prevent iOS Safari zoom on input focus */
-    input[type="text"], input[type="tel"], input[type="email"], input[type="date"], input[type="time"], input[type="number"], select, textarea {
-        font-size: 16px !important;
+    init() {
+        this.bindEvents();
+        this.resetWizard();
+    }
+
+    resetWizard() {
+        this.state = { ...INITIAL_STATE };
+        this.currentStep = 1;
+        this.isTransitioning = false;
+        this.updateStepper();
+        this.showStepView(1);
+        
+        // Populate static components
+        this.loadStep1Cities();
+        
+        // Reset inputs
+        const form = document.getElementById("booking-details-form");
+        if (form) form.reset();
+        
+        const preview = document.getElementById("screenshot-preview");
+        if (preview) preview.style.display = "none";
+        
+        const couponInput = document.getElementById("coupon-code-input");
+        if (couponInput) couponInput.value = "";
+        
+        this.recalculatePrices();
+    }
+
+    bindEvents() {
+        // Prev/Next buttons
+        const prevBtn = document.getElementById("wizard-prev-btn");
+        const nextBtn = document.getElementById("wizard-next-btn");
+        
+        if (prevBtn) {
+            prevBtn.addEventListener("click", () => this.handleNavigation(-1));
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener("click", () => this.handleNavigation(1));
+        }
+
+        // Calendar navigation
+        const prevMonth = document.getElementById("calendar-prev-month");
+        const nextMonth = document.getElementById("calendar-next-month");
+        
+        if (prevMonth) {
+            prevMonth.addEventListener("click", () => {
+                this.calendarDate.setMonth(this.calendarDate.getMonth() - 1);
+                this.renderCalendar();
+            });
+        }
+        if (nextMonth) {
+            nextMonth.addEventListener("click", () => {
+                this.calendarDate.setMonth(this.calendarDate.getMonth() + 1);
+                this.renderCalendar();
+            });
+        }
+
+        // Populate and bind month/year dropdowns
+        const selectMonth = document.getElementById("calendar-select-month");
+        const selectYear = document.getElementById("calendar-select-year");
+        if (selectMonth && selectYear) {
+            // Populate months
+            selectMonth.innerHTML = "";
+            const months = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
+            months.forEach((m, idx) => {
+                const opt = document.createElement("option");
+                opt.value = idx;
+                opt.textContent = m;
+                selectMonth.appendChild(opt);
+            });
+            
+            // Populate years (current year to current year + 10)
+            selectYear.innerHTML = "";
+            const startYear = new Date().getFullYear();
+            for (let y = startYear; y <= startYear + 10; y++) {
+                const opt = document.createElement("option");
+                opt.value = y;
+                opt.textContent = y;
+                selectYear.appendChild(opt);
+            }
+            
+            // Bind changes
+            selectMonth.addEventListener("change", (e) => {
+                this.calendarDate.setMonth(parseInt(e.target.value));
+                this.renderCalendar();
+            });
+            
+            selectYear.addEventListener("change", (e) => {
+                this.calendarDate.setFullYear(parseInt(e.target.value));
+                this.renderCalendar();
+            });
+        }
+
+        // Coupon code application
+        const applyCouponBtn = document.getElementById("apply-coupon-btn");
+        if (applyCouponBtn) {
+            applyCouponBtn.addEventListener("click", () => {
+                const code = document.getElementById("coupon-code-input").value.trim();
+                if (code) this.applyCouponCode(code);
+            });
+        }
+
+        // Payment screenshot file upload trigger
+        const uploadArea = document.getElementById("payment-upload-area");
+        const fileInput = document.getElementById("payment-file-input");
+        
+        if (uploadArea && fileInput) {
+            uploadArea.addEventListener("click", (e) => {
+                if (e.target !== fileInput) {
+                    fileInput.click();
+                }
+            });
+            
+            fileInput.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+            
+            fileInput.addEventListener("change", (e) => {
+                const file = e.target.files[0];
+                if (file) this.handleScreenshotSelect(file);
+            });
+            
+            // Drag and drop
+            uploadArea.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = "var(--gold-primary)";
+            });
+            
+            uploadArea.addEventListener("dragleave", () => {
+                uploadArea.style.borderColor = "var(--border-color)";
+            });
+            
+            uploadArea.addEventListener("drop", (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = "var(--border-color)";
+                const file = e.dataTransfer.files[0];
+                if (file) {
+                    fileInput.files = e.dataTransfer.files;
+                    this.handleScreenshotSelect(file);
+                }
+            });
+        }
+    }
+
+    showStepView(step) {
+        document.querySelectorAll(".wizard-view").forEach(el => el.classList.remove("active"));
+        const activeView = document.getElementById(`wizard-step-${step}`);
+        if (activeView) activeView.classList.add("active");
+        
+        if (step === 5) {
+            this.loadStep5PaymentDetails();
+        }
+        
+        // Button controls visibility
+        const prevBtn = document.getElementById("wizard-prev-btn");
+        const nextBtn = document.getElementById("wizard-next-btn");
+        const actionsRow = document.getElementById("wizard-actions-row");
+        
+        if (actionsRow) {
+            if (step === 6) {
+                // Confirmation step has its own actions in layout
+                actionsRow.style.display = "none";
+            } else {
+                actionsRow.style.display = "flex";
+            }
+        }
+        
+        if (prevBtn) {
+            prevBtn.style.visibility = (step === 1) ? "hidden" : "visible";
+        }
+        
+        if (nextBtn) {
+            if (step === 5) {
+                nextBtn.innerHTML = `Complete Booking <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+            } else {
+                nextBtn.innerHTML = `Next Step <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+            }
+        }
+
+        // Auto load lists on steps transition
+        if (step === 2) this.loadStep2Venues();
+        if (step === 3) this.loadStep3Addons();
+        if (step === 4) this.loadStep4Summary();
+        if (step === 5) {
+            // Dynamically set up the QR code with ₹500 advance amount
+            const qrImg = document.querySelector(".qr-code-img");
+            if (qrImg) {
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent('upi://pay?pa=7058754646-2@axl&pn=NAVNEET KRUSHNAMOHAN NALLA&mc=0000&mode=02&purpose=00&am=500')}`;
+            }
+        }
+    }
+
+    updateStepper() {
+        document.querySelectorAll(".step-indicator").forEach((el, idx) => {
+            const stepNum = idx + 1;
+            el.classList.remove("active", "completed");
+            
+            if (stepNum === this.currentStep) {
+                el.classList.add("active");
+            } else if (stepNum < this.currentStep) {
+                el.classList.add("completed");
+            }
+        });
+        
+        const progressBar = document.getElementById("step-progress-bar");
+        if (progressBar) {
+            const pct = ((this.currentStep - 1) / (this.totalSteps - 1)) * 100;
+            progressBar.style.width = `${pct}%`;
+        }
+    }
+
+    showConfirmationModal(title, message, nextStepName) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById("step-confirm-modal");
+            const modalTitle = document.getElementById("step-confirm-modal-title");
+            const modalMsg = document.getElementById("step-confirm-modal-message");
+            const proceedBtn = document.getElementById("step-confirm-proceed-btn");
+            const cancelBtn = document.getElementById("step-confirm-cancel-btn");
+
+            if (!modal || !proceedBtn || !cancelBtn) {
+                resolve(true); // default to true if modal is missing in DOM
+                return;
+            }
+
+            if (modalTitle) modalTitle.textContent = title;
+            if (modalMsg) modalMsg.textContent = message;
+
+            // Clone buttons to clear previous event listeners
+            const newProceedBtn = proceedBtn.cloneNode(true);
+            proceedBtn.parentNode.replaceChild(newProceedBtn, proceedBtn);
+
+            const newCancelBtn = cancelBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+            modal.style.display = "flex";
+            // Force reflow
+            modal.offsetHeight;
+            modal.classList.add("active");
+
+            newProceedBtn.addEventListener("click", () => {
+                modal.classList.remove("active");
+                setTimeout(() => {
+                    modal.style.display = "none";
+                }, 300);
+                resolve(true);
+            });
+
+            newCancelBtn.addEventListener("click", () => {
+                modal.classList.remove("active");
+                setTimeout(() => {
+                    modal.style.display = "none";
+                }, 300);
+                resolve(false);
+            });
+        });
+    }
+
+    checkStep2Completion() {
+        if (!this.state.venueId || !this.state.date || !this.state.slotId || !this.state.bookingType) {
+            return;
+        }
+        if (this.state.bookingType === "standard") {
+            if (this.state.standardDecor && this.state.personCount && this.state.yourName) {
+                this.handleNavigation(1);
+            }
+        } else if (this.state.bookingType === "combo") {
+            if (this.state.bookingComboId && this.state.ledNickName && this.state.decorType) {
+                this.handleNavigation(1);
+            }
+        }
+    }
+
+    async handleNavigation(dir) {
+        if (this.isTransitioning) return;
+        this.isTransitioning = true;
+        
+        const nextStep = this.currentStep + dir;
+        
+        if (dir === 1) {
+            // Validation before moving forward
+            if (!this.validateStep(this.currentStep)) {
+                this.isTransitioning = false;
+                return;
+            }
+            
+            // Show custom confirmation modal popup
+            const stepNames = {
+                1: "Screen & Slot Selection",
+                2: "Select Celebration Add-ons",
+                3: "Customer Details Form",
+                4: "Upload Transaction Payment",
+                5: "Complete Booking"
+            };
+            const nextStepName = stepNames[this.currentStep] || "Next Step";
+            const confirmed = await this.showConfirmationModal(
+                `Step ${this.currentStep} Completed!`,
+                `Would you like to proceed to the next step: ${nextStepName}?`,
+                nextStepName
+            );
+            if (!confirmed) {
+                this.isTransitioning = false;
+                return;
+            }
+            
+            if (this.currentStep === 5) {
+                await this.submitFinalBooking();
+                this.isTransitioning = false;
+                return;
+            }
+        }
+        
+        if (nextStep >= 1 && nextStep <= this.totalSteps) {
+            this.currentStep = nextStep;
+            this.updateStepper();
+            this.showStepView(this.currentStep);
+            
+            // Smoothly scroll the page to top of booking section
+            const bookingSec = document.getElementById("booking-section");
+            if (bookingSec) {
+                bookingSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+        this.isTransitioning = false;
+    }
+
+    validateStep(step) {
+        switch (step) {
+            case 1:
+                if (!this.state.cityId) {
+                    window.AppMain.showToast("Please select a city to proceed!", "error");
+                    return false;
+                }
+                return true;
+            case 2:
+                if (!this.state.venueId) {
+                    window.AppMain.showToast("Please select a themed screen to proceed!", "error");
+                    return false;
+                }
+                if (!this.state.date) {
+                    window.AppMain.showToast("Please select an available date from the calendar!", "error");
+                    return false;
+                }
+                if (!this.state.slotId) {
+                    window.AppMain.showToast("Please select an available time slot!", "error");
+                    return false;
+                }
+                if (!this.state.bookingType) {
+                    window.AppMain.showToast("Please select a booking type to proceed!", "error");
+                    return false;
+                }
+                if (this.state.bookingType === "standard") {
+                    const venue = window.AppDB.getVenues().find(v => v.id === this.state.venueId);
+                    if (venue && this.state.personCount > venue.capacity) {
+                        window.AppMain.showToast(`Selected screen capacity is limited to ${venue.capacity} guests!`, "error");
+                        return false;
+                    }
+                }
+                return true;
+            case 3:
+                // Add-ons are optional, no validation required
+                return true;
+            case 4:
+                return this.validateCustomerDetailsForm();
+            case 5:
+                if (!this.state.paymentScreenshot) {
+                    window.AppMain.showToast("Please upload the payment transaction screenshot to complete your booking!", "error");
+                    return false;
+                }
+                return true;
+            default:
+                return true;
+        }
+    }
+
+    // ----------------------------------------------------
+    // STEP 1: CITIES
+    // ----------------------------------------------------
+    async loadStep1Cities() {
+        window.AppMain.showLoader(true);
+        try {
+            const cities = await window.AppAPI.fetchCities();
+            const grid = document.getElementById("cities-grid-container");
+            if (!grid) return;
+            
+            grid.innerHTML = cities.map(c => `
+                <div class="glass-card city-select-card ${this.state.cityId === c.id ? 'selected' : ''}" data-id="${c.id}" data-name="${c.name}">
+                    <span class="city-icon">${c.icon}</span>
+                    <h4 class="city-name">${c.name}</h4>
+                    <p class="city-select-desc">Private Theatres & Lounges Available</p>
+                </div>
+            `).join('');
+            
+            // Add click events
+            grid.querySelectorAll(".city-select-card").forEach(card => {
+                card.addEventListener("click", () => {
+                    grid.querySelectorAll(".city-select-card").forEach(c => c.classList.remove("selected"));
+                    card.classList.add("selected");
+                    
+                    this.state.cityId = card.getAttribute("data-id");
+                    this.state.cityName = card.getAttribute("data-name");
+                    
+                    // Reset succeeding steps
+                    this.state.venueId = "";
+                    this.state.venueName = "";
+                    this.state.date = "";
+                    this.state.slotId = "";
+                    
+                    // Auto transition
+                    setTimeout(() => this.handleNavigation(1), 200);
+                });
+            });
+        } catch (err) {
+            window.AppMain.showToast("Failed to load cities.", "error");
+        } finally {
+            window.AppMain.showLoader(false);
+        }
+    }
+
+    // ----------------------------------------------------
+    // STEP 2: VENUES
+    // ----------------------------------------------------
+    async loadStep2Venues() {
+        window.AppMain.showLoader(true);
+        try {
+            // 1. Populate SR Nagar location card
+            const locContainer = document.getElementById("locations-grid-container");
+            if (locContainer) {
+                locContainer.innerHTML = `
+                    <div class="glass-card city-select-card selected" id="sr-nagar-location-card" style="padding: 20px; cursor: pointer;">
+                        <span class="city-icon" style="font-size: 2rem; margin-bottom: 8px;">📍</span>
+                        <h4 class="city-name" style="font-size: 1.1rem; margin-bottom: 4px;">SR Nagar</h4>
+                        <p class="city-select-desc" style="font-size: 0.8rem;">Hyderabad branch</p>
+                        <span class="slots-available-badge" style="margin-top: 8px;">✨ 5 Slots Daily</span>
+                    </div>
+                `;
+                
+                // Add click event to Sr Nagar card
+                const card = document.getElementById("sr-nagar-location-card");
+                if (card) {
+                    card.addEventListener("click", () => {
+                        const screenSelection = document.getElementById("screen-selection-container");
+                        if (screenSelection) screenSelection.style.display = "block";
+                    });
+                }
+            }
+            
+            // Capture custom details inputs for LED nickname and decoration type
+            const ledNickInput = document.getElementById("led-nick-name");
+            if (ledNickInput) {
+                ledNickInput.addEventListener("input", () => {
+                    this.state.ledNickName = ledNickInput.value.trim();
+                });
+                ledNickInput.addEventListener("blur", () => {
+                    if(typeof this.checkStep2Completion === 'function') this.checkStep2Completion();
+                });
+                ledNickInput.addEventListener("change", () => {
+                    if(typeof this.checkStep2Completion === 'function') this.checkStep2Completion();
+                });
+            }
+            // Person Count button clicks
+            document.querySelectorAll('.person-count-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.person-count-btn').forEach(b => {
+                        b.style.border = '1px solid var(--border-color)';
+                        b.style.background = 'var(--glass-bg)';
+                        b.style.color = '';
+                    });
+                    btn.style.border = '2px solid var(--gold-primary)';
+                    btn.style.background = 'rgba(124,58,237,0.08)';
+                    this.state.personCount = parseInt(btn.getAttribute('data-count'), 10);
+                    this.recalculatePrices();
+                    if (typeof this.checkStep2Completion === 'function') this.checkStep2Completion();
+                });
+            });
+
+            // Decoration Type button clicks
+            document.querySelectorAll('.decor-type-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.decor-type-btn').forEach(b => {
+                        b.style.border = '1px solid var(--border-color)';
+                        b.style.background = 'var(--glass-bg)';
+                    });
+                    btn.style.border = '2px solid var(--gold-primary)';
+                    btn.style.background = 'rgba(124,58,237,0.08)';
+                    this.state.standardDecor = btn.getAttribute('data-decor');
+                    this.state.standardDecorLabel = btn.querySelector('div div:first-child').textContent.trim();
+                    this.state.decorationPrice = parseInt(btn.getAttribute('data-price'), 10) || 0;
+                    this.recalculatePrices();
+                    if (typeof this.checkStep2Completion === 'function') this.checkStep2Completion();
+                });
+            });
+
+            // Name field listeners
+            const yourNameInput = document.getElementById('standard-your-name');
+            const partnerNameInput = document.getElementById('standard-partner-name');
+            if (yourNameInput) {
+                yourNameInput.addEventListener('input', () => {
+                    this.state.yourName = yourNameInput.value.trim();
+                    if (typeof this.checkStep2Completion === 'function') this.checkStep2Completion();
+                });
+            }
+            if (partnerNameInput) {
+                partnerNameInput.addEventListener('input', () => {
+                    this.state.partnerName = partnerNameInput.value.trim();
+                });
+            }
+            
+            // Auto-display screens since SR Nagar is selected by default
+            const screenSelection = document.getElementById("screen-selection-container");
+            if (screenSelection) screenSelection.style.display = "block";
+
+            // 2. Fetch and render Screens
+            const venues = await window.AppAPI.fetchVenues(this.state.cityId);
+            const grid = document.getElementById("venues-grid-container");
+            if (!grid) return;
+            
+            if (venues.length === 0) {
+                grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No themed screens found in SR Nagar yet.</p>`;
+                return;
+            }
+            
+            const timingsMap = {
+                "v1": ["09.00 to 12.00", "12.30 to 03.30", "04.00 to 07.00", "07.30 to 10.30", "11.00 to 01.00"],
+                "v2": ["09.15 to 12.15", "12.45 to 03.45", "04.15 to 07.15", "07.45 to 10.45", "11.00 to 01.00"],
+                "v3": ["09.30 to 12.30", "01.00 to 04.00", "04.20 to 07.20", "07.45 to 10.45", "11.00 to 01.00"],
+                "v4": ["09.15 to 12.15", "12.45 to 03.45", "04.15 to 07.15", "07.40 to 10.40", "11.00 to 01.00"]
+            };
+
+            grid.innerHTML = venues.map(v => `
+                <div class="glass-card venue-select-card ${this.state.venueId === v.id ? 'selected' : ''}" data-id="${v.id}" data-name="${v.name}" data-price="${v.price}">
+                    <img src="${v.image}" class="venue-select-img" alt="${v.name}" onerror="this.src='https://images.unsplash.com/photo-1595769816263-9b910be24d5f?auto=format&fit=crop&w=600&q=80'">
+                    <div class="venue-select-info">
+                        <h4 class="venue-select-name">${v.name}</h4>
+                        <div class="venue-select-meta">
+                            <span>👥 Max: ${v.capacity} guests</span>
+                            <span>⭐ ${v.rating} / 5</span>
+                        </div>
+                        <p class="service-description" style="font-size: 0.85rem; line-height: 1.4; margin-bottom: 10px; flex-grow: 1;">
+                            ${v.description}
+                        </p>
+                        
+                        <div class="screen-timings-preview" style="margin-bottom: 12px; font-size: 0.8rem; border-top: 1px dashed var(--border-color); padding-top: 8px;">
+                            <strong style="color: var(--gold-primary); display: block; margin-bottom: 6px;">⏰ Daily Timings:</strong>
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                ${(timingsMap[v.id] || []).map(t => `<span style="background: rgba(255,255,255,0.06); padding: 3px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); font-weight: 500;">${t}</span>`).join('')}
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <span class="slots-available-badge">✨ 5 Slots Available Daily</span>
+                            <span class="dates-available-badge">📅 All Dates Available</span>
+                        </div>
+
+                    </div>
+                </div>
+            `).join('');
+            
+            grid.querySelectorAll(".venue-select-card").forEach(card => {
+                card.addEventListener("click", () => {
+                    grid.querySelectorAll(".venue-select-card").forEach(c => c.classList.remove("selected"));
+                    card.classList.add("selected");
+                    
+                    this.state.venueId = card.getAttribute("data-id");
+                    this.state.venueName = card.getAttribute("data-name");
+                    this.state.venuePrice = parseInt(card.getAttribute("data-price"), 10);
+                    
+                    // Update person count buttons for screen capacity
+                    this.updateGuestButtons();
+                    
+                    // Reset date slots
+                    this.state.date = "";
+                    this.state.slotId = "";
+                    this.state.slotTime = "";
+                    
+                    // Display kitchen notice, calendar & slots
+                    const datetimeContainer = document.getElementById("datetime-selection-container");
+                    if (datetimeContainer) {
+                        datetimeContainer.style.display = "block";
+                        datetimeContainer.style.animation = "fadeIn 0.4s ease-out";
+                    }
+                    
+                    this.calendarDate = new Date();
+                    this.renderCalendar();
+                    this.renderSlots(); // Displays "select date" prompt
+                    
+                    // Smoothly scroll to the datetime container
+                    datetimeContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+            
+            // If venue is already selected in state, make sure datetime elements are open
+            if (this.state.venueId) {
+                const datetimeContainer = document.getElementById("datetime-selection-container");
+                if (datetimeContainer) datetimeContainer.style.display = "block";
+                this.updateGuestButtons();
+                this.renderCalendar();
+                this.renderSlots();
+            }
+        } catch (err) {
+            window.AppMain.showToast("Failed to load screens.", "error");
+        } finally {
+            window.AppMain.showLoader(false);
+        }
+    }
+
+    // ----------------------------------------------------
+    // STEP 3: DATETIME CALENDAR & SLOTS
+    // ----------------------------------------------------
+    initStep3Datetime() {
+        this.calendarDate = new Date();
+        this.renderCalendar();
+        this.renderSlots(); // Shows empty state or prompt
+    }
+
+    renderCalendar() {
+        const grid = document.getElementById("calendar-grid-days");
+        const selectMonth = document.getElementById("calendar-select-month");
+        const selectYear = document.getElementById("calendar-select-year");
+        if (!grid) return;
+        
+        grid.innerHTML = "";
+        
+        const year = this.calendarDate.getFullYear();
+        const month = this.calendarDate.getMonth();
+        
+        if (selectMonth && selectYear) {
+            selectMonth.value = month;
+            selectYear.value = year;
+        }
+
+        // Disable prev-month button if it's the current month/year or in the past
+        const prevMonthBtn = document.getElementById("calendar-prev-month");
+        if (prevMonthBtn) {
+            const today = new Date();
+            const isCurrentMonthOrPast = (year < today.getFullYear()) || (year === today.getFullYear() && month <= today.getMonth());
+            prevMonthBtn.disabled = isCurrentMonthOrPast;
+            prevMonthBtn.style.opacity = isCurrentMonthOrPast ? "0.3" : "1";
+            prevMonthBtn.style.pointerEvents = isCurrentMonthOrPast ? "none" : "auto";
+        }
+        
+        // First day of month
+        const firstDay = new Date(year, month, 1).getDay();
+        // Number of days in month
+        const totalDays = new Date(year, month + 1, 0).getDate();
+        
+        // Empty cells for preceding days
+        for (let i = 0; i < firstDay; i++) {
+            const cell = document.createElement("div");
+            cell.className = "calendar-cell empty";
+            grid.appendChild(cell);
+        }
+        
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        
+        for (let day = 1; day <= totalDays; day++) {
+            const cellDate = new Date(year, month, day);
+            const cell = document.createElement("div");
+            cell.className = "calendar-cell";
+            cell.textContent = day;
+            
+            // Format to YYYY-MM-DD for visual reference
+            const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            // Format to DD/MM/YYYY for data state representation
+            const dateDMY = `${String(day).padStart(2, '0')}/${String(month + 1).padStart(2, '0')}/${year}`;
+            
+            // Highlight today
+            if (cellDate.getTime() === today.getTime()) {
+                cell.classList.add("today");
+            }
+            
+            // Disable past dates
+            if (cellDate < today) {
+                cell.classList.add("disabled");
+            } else {
+                if (this.state.date === dateDMY) {
+                    cell.classList.add("selected");
+                }
+                
+                cell.addEventListener("click", () => {
+                    grid.querySelectorAll(".calendar-cell").forEach(c => c.classList.remove("selected"));
+                    cell.classList.add("selected");
+                    
+                    this.state.date = dateDMY;
+                    this.state.slotId = "";
+                    this.state.slotTime = "";
+                    
+                    this.loadTimeSlots(dateDMY);
+                });
+            }
+            grid.appendChild(cell);
+        }
+    }
+
+    async loadTimeSlots(dateString) {
+        const listContainer = document.getElementById("slots-grid-container");
+        if (!listContainer) return;
+        
+        listContainer.innerHTML = `<div class="spinner" style="width: 30px; height: 30px; margin: 20px auto;"></div>`;
+        
+        try {
+            const slots = await window.AppAPI.fetchSlotsAvailability(this.state.venueId, dateString);
+            
+            listContainer.innerHTML = slots.map(s => {
+                const btnClass = s.isBooked ? 'booked' : (this.state.slotId === s.id ? 'selected' : '');
+                const badgeText = s.isBooked ? 'Booked' : 'Available';
+                
+                return `
+                    <button class="slot-btn ${btnClass}" data-id="${s.id}" data-time="${s.time}" ${s.isBooked ? 'disabled' : ''}>
+                        <span>${s.time}</span>
+                        <span class="slot-status-badge">${badgeText}</span>
+                    </button>
+                `;
+            }).join('');
+            
+            listContainer.querySelectorAll(".slot-btn:not(.booked)").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    listContainer.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("selected"));
+                    btn.classList.add("selected");
+                    
+                    this.state.slotId = btn.getAttribute("data-id");
+                    this.state.slotTime = btn.getAttribute("data-time");
+                    
+                    // Show booking type selection after slot is chosen
+                    const bookingTypeContainer = document.getElementById("booking-type-container");
+                    if (bookingTypeContainer) {
+                        bookingTypeContainer.style.display = "block";
+                        bookingTypeContainer.style.animation = "fadeIn 0.4s ease-out";
+                        // Scroll into view for better UX
+                        bookingTypeContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+
+                // Booking Type selection listeners
+                const standardBtn = document.getElementById("booking-type-standard");
+                const comboBtn = document.getElementById("booking-type-combo");
+                if (standardBtn) {
+                    standardBtn.addEventListener("click", () => {
+                        this.state.bookingType = "standard";
+                        // Hide combo packages and custom details
+                        const comboContainer = document.getElementById("combo-packages-selection-container");
+                        if (comboContainer) comboContainer.style.display = "none";
+                        const customDetails = document.getElementById("combo-custom-details-container");
+                        if (customDetails) customDetails.style.display = "none";
+                        // Show standard details inputs
+                        const standardDetails = document.getElementById("standard-details-container");
+                        if (standardDetails) standardDetails.style.display = "block";
+                        // Hide combo details if visible
+                        if (customDetails) customDetails.style.display = "none";
+                        setTimeout(() => { if(typeof this.checkStep2Completion === 'function') this.checkStep2Completion(); }, 300);
+                    });
+                }
+                if (comboBtn) {
+                    comboBtn.addEventListener("click", () => {
+                        this.state.bookingType = "combo";
+                        const comboContainer = document.getElementById("combo-packages-selection-container");
+                        if (comboContainer) comboContainer.style.display = "block";
+                        // Ensure custom details hidden until a package is selected
+                        const customDetails = document.getElementById("combo-custom-details-container");
+                        if (customDetails) customDetails.style.display = "none";
+                    });
+                }
+                // Combo package selection listeners
+                const comboCards = document.querySelectorAll(".combo-card");
+                comboCards.forEach(card => {
+                    card.addEventListener("click", () => {
+                        // Mark selected
+                        comboCards.forEach(c => c.classList.remove("selected"));
+                        card.classList.add("selected");
+                        // Store selected combo id and price
+                        this.state.bookingComboId = card.getAttribute("data-combo-id");
+                        this.state.bookingComboPrice = parseInt(card.getAttribute("data-price"), 10);
+                        // Show custom details inputs
+                        const customDetails = document.getElementById("combo-custom-details-container");
+                        if (customDetails) customDetails.style.display = "block";
+                        setTimeout(() => this.checkStep2Completion(), 300);
+                    });
+                });
+                    }
+                });
+            });
+        } catch (err) {
+            listContainer.innerHTML = `
+                <p style="color: var(--danger); text-align: center; font-size: 0.9rem; padding: 20px 0; line-height: 1.4;">
+                    ${err.message || "Failed to load slots."}<br>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-top: 8px;">Please click the date again to retry.</span>
+                </p>
+            `;
+        }
+    }
+
+    renderSlots() {
+        const listContainer = document.getElementById("slots-grid-container");
+        if (!listContainer) return;
+        
+        if (!this.state.date) {
+            listContainer.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 40px 0;">Please select a date from the calendar to view available time slots.</p>`;
+        } else {
+            this.loadTimeSlots(this.state.date);
+        }
+    }
+
+    // ----------------------------------------------------
+    // STEP 4: ADD-ONS SELECT
+    // ----------------------------------------------------
+    async loadStep3Addons() {
+        window.AppMain.showLoader(true);
+        try {
+            const addons = await window.AppAPI.fetchAddons();
+            const grid = document.getElementById("addons-grid-container");
+            if (!grid) return;
+            
+            grid.innerHTML = addons.map(a => {
+                const isSelected = this.state.addons.some(selected => selected.id === a.id);
+                return `
+                    <div class="glass-card addon-card ${isSelected ? 'selected' : ''}" data-id="${a.id}" data-name="${a.name}" data-price="${a.price}">
+                        <div class="addon-checkbox"></div>
+                        <div class="addon-img-wrapper">
+                            <div class="addon-img" style="display:flex; align-items:center; justify-content:center; font-size:2.2rem; background:rgba(255,255,255,0.03); height:100%">${a.icon}</div>
+                        </div>
+                        <h5 class="addon-name">${a.name}</h5>
+                        <div style="font-weight:700; color:var(--gold-primary); text-align:center; font-size:0.95rem; margin-bottom:5px;">₹${a.price}</div>
+                        <p class="service-description" style="font-size:0.75rem; text-align:center; line-height:1.3; height:32px; overflow:hidden; margin-bottom:10px;">${a.description}</p>
+                    </div>
+                `;
+            }).join('');
+            
+            grid.querySelectorAll(".addon-card").forEach(card => {
+                card.addEventListener("click", () => {
+                    const id = card.getAttribute("data-id");
+                    const name = card.getAttribute("data-name");
+                    const price = parseInt(card.getAttribute("data-price"), 10);
+                    
+                    const isSelected = card.classList.contains("selected");
+                    
+                    if (isSelected) {
+                        card.classList.remove("selected");
+                        this.state.addons = this.state.addons.filter(a => a.id !== id);
+                    } else {
+                        card.classList.add("selected");
+                        this.state.addons.push({ id, name, price });
+                    }
+                    this.recalculatePrices();
+                });
+            });
+        } catch (err) {
+            window.AppMain.showToast("Failed to load add-ons.", "error");
+        } finally {
+            window.AppMain.showLoader(false);
+        }
+    }
+
+    recalculatePrices() {
+        let subtotal = 0;
+            // Add combo price if a combo is selected
+            if (this.state.bookingComboPrice) {
+                subtotal += this.state.bookingComboPrice;
+            }
+            // Add standard booking price based on person count
+            if (this.state.personCount) {
+                const priceMap = {
+                    1: 1200, 2: 1200, 3: 1200, 4: 1200,
+                    5: 1450, 6: 1700, 7: 1950, 8: 2200,
+                    9: 2450, 10: 2700, 11: 2950, 12: 3200,
+                    13: 3450, 14: 3700, 15: 3950, 16: 4200,
+                    17: 4450, 18: 4700, 19: 4950, 20: 5200
+                };
+                subtotal += priceMap[this.state.personCount] || 0;
+            }
+            // Add decoration price for standard booking
+            if (this.state.bookingType === 'standard' && this.state.decorationPrice > 0) {
+                subtotal += this.state.decorationPrice;
+            }
+            // Add addons
+            this.state.addons.forEach(a => {
+                subtotal += a.price;
+            });
+            this.state.subtotal = subtotal;
+        // Recalculate discount if coupon applied
+        if (this.state.couponCode) {
+            // Apply it silently
+            const coupons = window.AppDB.getCoupons();
+            const cp = coupons.find(c => c.code.toUpperCase() === this.state.couponCode.toUpperCase());
+            if (cp && subtotal >= cp.minPurchase) {
+                this.state.discount = Math.round((subtotal * (cp.discountPercent / 100)) * 100) / 100;
+            } else {
+                this.state.couponCode = "";
+                this.state.discount = 0;
+            }
+        } else {
+            this.state.discount = 0;
+        }
+        this.state.total = Math.round((this.state.subtotal - this.state.discount) * 100) / 100;
+        this.updatePriceUI();
+    }
+
+    updatePriceUI() {
+        // Hide price elements to comply with "remove prices" request
+        const subEl = document.getElementById("summary-subtotal");
+        const discEl = document.getElementById("summary-discount");
+        const totEl = document.getElementById("summary-total");
+        const discRow = document.getElementById("summary-discount-row");
+        const priceCard = document.querySelector('.price-summary-card');
+        if (subEl) subEl.textContent = "";
+        if (discEl) discEl.textContent = "";
+        if (totEl) totEl.textContent = "";
+        if (discRow) discRow.style.display = "none";
+        if (priceCard) priceCard.style.display = "none";
+    }
+
+    async applyCouponCode(code) {
+        const applyBtn = document.getElementById("apply-coupon-btn");
+        if (applyBtn) applyBtn.disabled = true;
+        
+        try {
+            const coupon = await window.AppAPI.validateCoupon(code, this.state.subtotal);
+            this.state.couponCode = coupon.code;
+            this.recalculatePrices();
+            window.AppMain.showToast(`Coupon "${coupon.code}" applied successfully! Saved ${coupon.discountPercent}%`, "success");
+        } catch (err) {
+            window.AppMain.showToast(err.message, "error");
+            this.state.couponCode = "";
+            this.state.discount = 0;
+            this.recalculatePrices();
+        } finally {
+            if (applyBtn) applyBtn.disabled = false;
+        }
+    }
+
+    // ----------------------------------------------------
+    // STEP 5: CUSTOMER DETAILS FORM
+    // ----------------------------------------------------
+    loadStep4Summary() {
+        const container = document.getElementById("selected-venue-summary-card");
+        if (!container) return;
+        
+        const addonsText = this.state.addons.length > 0 
+            ? this.state.addons.map(a => `<li>${a.name}</li>`).join('')
+            : '<li style="list-style:none; color:var(--text-muted);">None selected</li>';
+        
+        container.innerHTML = `
+            <h4 class="venue-select-name" style="border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:15px;">Booking Details</h4>
+            <div style="font-size:0.9rem; line-height:1.8;">
+                <p>📍 <strong>City:</strong> ${this.state.cityName}</p>
+                <p>🎬 <strong>Venue:</strong> ${this.state.venueName}</p>
+                <p>📅 <strong>Date:</strong> ${this.state.date}</p>
+                <p>🕒 <strong>Slot:</strong> ${this.state.slotTime}</p>
+                <div style="margin-top:15px;">
+                    <strong>🎁 Add-ons:</strong>
+                    <ul style="padding-left:20px; margin-top:5px; font-size:0.85rem;">
+                        ${addonsText}
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        this.recalculatePrices();
+    }
+
+    validateCustomerDetailsForm() {
+        const name = document.getElementById("cust-name").value.trim();
+        const phone = document.getElementById("cust-phone").value.trim();
+        const email = document.getElementById("cust-email").value.trim();
+        const occasion = document.getElementById("cust-occasion").value;
+        const notes = document.getElementById("cust-notes").value.trim();
+        
+        if (!name) {
+            window.AppMain.showToast("Full Name is required!", "error");
+            return false;
+        }
+        if (!phone || phone.length < 10) {
+            window.AppMain.showToast("Please enter a valid 10-digit Phone Number!", "error");
+            return false;
+        }
+        if (!email || !email.includes("@")) {
+            window.AppMain.showToast("Please enter a valid Email Address!", "error");
+            return false;
+        }
+        if (!occasion) {
+            window.AppMain.showToast("Please select an Occasion Type!", "error");
+            return false;
+        }
+        
+        // Save form state
+        this.state.customerName = name;
+        this.state.customerPhone = phone;
+        this.state.customerEmail = email;
+        this.state.occasion = occasion;
+        this.state.specialInstructions = notes;
+        
+        return true;
+    }
+
+    loadStep5PaymentDetails() {
+        const container = document.getElementById("payment-cost-breakdown");
+        if (!container) return;
+
+        this.recalculatePrices(); // Ensure prices are up to date
+        
+        let addonRows = this.state.addons.map(a => `
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                <span>${a.name}</span>
+                <span>₹${a.price}</span>
+            </div>
+        `).join('');
+        
+        let comboRow = "";
+        if (this.state.bookingComboPrice) {
+            comboRow = `
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                <span>Combo Package</span>
+                <span>₹${this.state.bookingComboPrice}</span>
+            </div>`;
+        }
+
+        let basePriceText = this.state.bookingType === "standard" ? `Base Package (${this.state.personCount} Person${this.state.personCount > 1 ? 's' : ''})` : `Venue Base Price`;
+        const decorRow = (this.state.bookingType === 'standard' && this.state.standardDecor) ? `
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                <span>🎀 Decoration (${this.state.standardDecorLabel || 'Theme'})</span>
+                <span>₹${this.state.decorationPrice}</span>
+            </div>` : '';
+
+        container.innerHTML = `
+            <h4 style="border-bottom:1px dashed var(--border-color); padding-bottom:8px; margin-bottom:10px; color:var(--text-color); font-size:1rem;">Cost Breakdown</h4>
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                <span>${basePriceText}</span>
+                <span>₹${(this.state.bookingType === "standard" && this.state.personCount ? this.getPriceForPersons(this.state.personCount) : 0)}</span>
+            </div>
+            ${decorRow}
+            ${comboRow}
+            ${addonRows}
+            ${this.state.discount > 0 ? `
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#10b981;">
+                <span>Discount Applied</span>
+                <span>- ₹${this.state.discount}</span>
+            </div>` : ''}
+            <div style="border-top:1px dashed var(--border-color); margin-top:10px; padding-top:10px; display:flex; justify-content:space-between; font-weight:bold; font-size:1.1rem; color:var(--text-color);">
+                <span>Total Amount</span>
+                <span>₹${this.state.total}</span>
+            </div>
+        `;
+    }
+
+    updateGuestButtons() {
+        if (!this.state.venueId) return;
+        const venues = window.AppDB.getVenues();
+        const venue = venues.find(v => v.id === this.state.venueId);
+        if (!venue) return;
+
+        document.querySelectorAll('.person-count-btn').forEach(btn => {
+            const count = parseInt(btn.getAttribute('data-count'), 10);
+            if (count > venue.capacity) {
+                btn.disabled = true;
+                btn.style.opacity = '0.3';
+                btn.style.cursor = 'not-allowed';
+                btn.style.pointerEvents = 'none';
+                
+                // If this button was selected, deselect it and reset price calculation
+                if (this.state.personCount === count) {
+                    this.state.personCount = null;
+                    btn.style.border = '1px solid var(--border-color)';
+                    btn.style.background = 'var(--glass-bg)';
+                    btn.style.color = '';
+                    this.recalculatePrices();
+                }
+            } else {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+                btn.style.pointerEvents = 'auto';
+            }
+        });
+    }
+
+    getPriceForPersons(count) {
+        const priceMap = {
+            1: 1200, 2: 1200, 3: 1200, 4: 1200,
+            5: 1450, 6: 1700, 7: 1950, 8: 2200,
+            9: 2450, 10: 2700, 11: 2950, 12: 3200,
+            13: 3450, 14: 3700, 15: 3950, 16: 4200,
+            17: 4450, 18: 4700, 19: 4950, 20: 5200
+        };
+        return priceMap[count] || 0;
+    }
+
+    // ----------------------------------------------------
+    // STEP 6: PAYMENT TRANSACTION UPLOAD
+    // ----------------------------------------------------
+    handleScreenshotSelect(file) {
+        const preview = document.getElementById("screenshot-preview");
+        const previewImg = document.getElementById("screenshot-preview-img");
+        
+        if (preview && previewImg) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // Compress the image before uploading to prevent Payload Too Large errors
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Get compressed base64 (jpeg, 0.7 quality)
+                    const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+                    
+                    previewImg.src = compressedBase64;
+                    preview.style.display = "block";
+                    this.state.paymentScreenshot = compressedBase64; 
+                    window.AppMain.showToast("Screenshot uploaded successfully!", "success");
+                    
+                    // Auto-transition to complete booking confirmation
+                    setTimeout(() => this.handleNavigation(1), 500);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // ----------------------------------------------------
+    // STEP 7: FINAL SUBMISSION & RECEIPT
+    // ----------------------------------------------------
+    async submitFinalBooking() {
+        window.AppMain.showLoader(true);
+        try {
+            const response = await window.AppAPI.createBooking(this.state);
+            this.state.id = response.id;
+            
+            // Transition to confirmation screen
+            this.currentStep = 6;
+            this.updateStepper();
+            this.showStepView(6);
+            
+            // Populate Confirmation details
+            document.getElementById("confirm-booking-id").textContent = response.id;
+            document.getElementById("confirm-cust-name").textContent = response.customerName;
+            const nickEl = document.getElementById("confirm-nick-name");
+            if (nickEl) nickEl.textContent = this.state.ledNickName || "N/A";
+            document.getElementById("confirm-cust-phone").textContent = response.customerPhone;
+            document.getElementById("confirm-cust-email").textContent = response.customerEmail;
+            document.getElementById("confirm-venue-name").textContent = response.venueName;
+            document.getElementById("confirm-date").textContent = response.date;
+            document.getElementById("confirm-slot").textContent = response.slotTime;
+            // Price hidden per requirement
+            
+            window.AppMain.showToast("Congratulations! Your celebration booking is submitted for approval.", "success");
+            
+            // Hook up Download PDF Receipt (Pending Admin Approval first)
+            const downloadBtn = document.getElementById("download-receipt-pdf-btn");
+            if (downloadBtn) {
+                downloadBtn.disabled = true;
+                downloadBtn.innerHTML = "⌛ Under payment check-in process.";
+                downloadBtn.style.opacity = "0.6";
+                downloadBtn.style.cursor = "not-allowed";
+                
+                // Clear any old click listeners
+                const newBtn = downloadBtn.cloneNode(true);
+                downloadBtn.parentNode.replaceChild(newBtn, downloadBtn);
+                
+                // Start polling database for booking status
+                if (this.approvalPollInterval) {
+                    clearInterval(this.approvalPollInterval);
+                }
+                
+                this.approvalPollInterval = setInterval(async () => {
+                    try {
+                        const booking = await window.AppAPI.trackBooking(response.id, response.customerPhone);
+                        if (booking && booking.status === "approved") {
+                            clearInterval(this.approvalPollInterval);
+                            this.approvalPollInterval = null;
+                            
+                            // Enable button
+                            const activeBtn = document.getElementById("download-receipt-pdf-btn");
+                            if (activeBtn) {
+                                activeBtn.disabled = false;
+                                activeBtn.innerHTML = "🖨️ Download PDF Receipt";
+                                activeBtn.style.opacity = "1";
+                                activeBtn.style.cursor = "pointer";
+                                
+                                // Hook up the actual download listener
+                                const finalBtn = activeBtn.cloneNode(true);
+                                activeBtn.parentNode.replaceChild(finalBtn, activeBtn);
+                                finalBtn.addEventListener("click", () => {
+                                    window.AppExports.downloadReceiptPDF(booking);
+                                    setTimeout(() => {
+                                        const phone = booking.customerPhone.replace(/[^0-9]/g, '');
+                                        const phoneWithCountry = phone.startsWith("91") && phone.length > 10 ? phone : `91${phone}`;
+                                        const message = encodeURIComponent(`*A to Z Celebrations - Booking Confirmed!* \n\nHi ${booking.customerName},\n\nYour booking receipt is ready! \n\n*Booking ID:* ${booking.id}\n*Date:* ${booking.date}\n*Slot:* ${booking.slotTime}\n\nWe look forward to hosting you!`);
+                                        window.open(`https://wa.me/${phoneWithCountry}?text=${message}`, '_blank');
+                                    }, 1500); // Give it a slight delay so PDF downloads first
+                                });
+                            }
+                            window.AppMain.showToast("Your booking has been approved! Receipt is ready for download.", "success");
+                        } else if (booking && (booking.status === "rejected" || booking.status === "cancelled")) {
+                            clearInterval(this.approvalPollInterval);
+                            this.approvalPollInterval = null;
+                            
+                            const activeBtn = document.getElementById("download-receipt-pdf-btn");
+                            if (activeBtn) {
+                                activeBtn.disabled = true;
+                                activeBtn.innerHTML = `❌ Booking ${booking.status.toUpperCase()}`;
+                                activeBtn.style.opacity = "0.6";
+                                activeBtn.style.cursor = "not-allowed";
+                            }
+                            window.AppMain.showToast(`Your booking was ${booking.status}.`, "error");
+                        }
+                    } catch (e) {
+                        console.error("Polling error:", e);
+                    }
+                }, 3000);
+            }
+            
+            // Hook up Back to Home buttons
+            const homeBtn = document.getElementById("confirm-home-btn");
+            if (homeBtn) {
+                homeBtn.addEventListener("click", () => {
+                    this.resetWizard();
+                    window.AppMain.navigate("home");
+                });
+            }
+        } catch (err) {
+            window.AppMain.showToast("Failed to complete booking. " + err.message, "error");
+            if (err.message && (err.message.includes("already booked") || err.message.includes("slot"))) {
+                setTimeout(() => {
+                    this.currentStep = 2;
+                    this.updateStepper();
+                    this.showStepView(2);
+                    this.loadStep2Venues(); // Refresh views and availability
+                }, 1500);
+            }
+        } finally {
+            window.AppMain.showLoader(false);
+        }
     }
 }
-#terms-conditions-section { display: block !important; }
 
-/* --- PERFORMANCE & ACCESSIBILITY --- */
-:focus-visible {
-    outline: 2px solid var(--gold-primary);
-    outline-offset: 3px;
-    border-radius: var(--radius-sm);
-}
-
-.glass-card, .btn, .slot-btn {
-    will-change: transform, opacity;
-}
+window.AppBookingWizard = new BookingWizard();

@@ -1,544 +1,348 @@
-/* HERO SECTION */
-.hero {
-    height: 100vh;
-    min-height: 600px;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-}
-
-.hero-slider {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-}
-
-.hero-slide {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    transition: opacity 1s ease-in-out;
-    background-size: cover;
-    background-position: center;
-}
-
-.hero-slide.active {
-    opacity: 1;
-}
-
-.hero-slide::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 0%, rgba(247, 246, 251, 0.85) 80%, rgba(247, 246, 251, 1) 100%);
-}
-
-.hero-content {
-    position: relative;
-    z-index: 2;
-    max-width: 750px;
-    margin-top: 80px;
-    animation: slideUp 1s ease-out;
-}
-
-.hero-title {
-    font-size: 4rem;
-    font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: 24px;
-}
-
-.hero-description {
-    font-size: 1.2rem;
-    color: var(--text-secondary);
-    margin-bottom: 36px;
-}
-
-/* SERVICES SECTION */
-.services-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 30px;
-}
-
-.service-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: var(--radius-md);
-    height: 420px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    padding: 30px;
-    border: 1px solid var(--glass-border);
-}
-
-.service-card-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    transition: transform var(--transition-slow);
-    z-index: 1;
-}
-
-.service-card:hover .service-card-bg {
-    transform: scale(1.1);
-}
-
-.service-card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to top, rgba(247, 246, 251, 0.92) 0%, rgba(247, 246, 251, 0.4) 50%, rgba(247, 246, 251, 0.1) 100%);
-    z-index: 2;
-    transition: var(--transition-normal);
-}
-
-.service-card:hover::after {
-    background: linear-gradient(to top, rgba(247, 246, 251, 0.96) 0%, rgba(247, 246, 251, 0.6) 60%, rgba(247, 246, 251, 0.2) 100%);
-}
-
-.service-card-content {
-    position: relative;
-    z-index: 3;
-}
-
-.service-icon-box {
-    width: 50px;
-    height: 50px;
-    background: rgba(124, 58, 237, 0.08);
-    border: 1px solid var(--gold-primary);
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-    color: var(--gold-primary);
-    transition: var(--transition-normal);
-}
-
-.service-card:hover .service-icon-box {
-    background: var(--gold-primary);
-    color: #ffffff;
-    box-shadow: 0 0 15px var(--gold-primary);
-}
-
-.service-title {
-    font-size: 1.5rem;
-    margin-bottom: 12px;
-}
-
-.service-description {
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-    margin-bottom: 20px;
-    opacity: 0.85;
-}
-
-.service-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--gold-primary);
-}
-
-.service-link svg {
-    transition: transform var(--transition-fast);
-}
-
-.service-card:hover .service-link svg {
-    transform: translateX(5px);
-}
-
-/* GALLERY / PHOTOS SLIDER */
-.gallery-section {
-    background: var(--bg-surface);
-}
-
-.gallery-container {
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-    padding: 20px 0;
-}
-
-.gallery-track {
-    display: flex;
-    gap: 20px;
-    transition: transform var(--transition-slow);
-}
-
-.gallery-item {
-    flex: 0 0 350px;
-    height: 250px;
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    border: 1px solid var(--glass-border);
-    position: relative;
-    cursor: pointer;
-}
-
-.gallery-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform var(--transition-normal);
-}
-
-.gallery-item:hover .gallery-img {
-    transform: scale(1.08);
-}
-
-.gallery-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(124, 58, 237, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: var(--transition-normal);
-}
-
-.gallery-item:hover .gallery-overlay {
-    opacity: 1;
-}
-
-.gallery-overlay svg {
-    color: var(--gold-primary);
-    transform: scale(0.8);
-    transition: var(--transition-normal);
-}
-
-.gallery-item:hover .gallery-overlay svg {
-    transform: scale(1);
-}
-
-.gallery-controls {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 30px;
-}
-
-.gallery-control-btn {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--text-primary);
-    transition: var(--transition-fast);
-}
-
-.gallery-control-btn:hover {
-    border-color: var(--gold-primary);
-    color: var(--gold-primary);
-    background: rgba(124, 58, 237, 0.05);
-}
-
-/* CUSTOMER TESTIMONIALS */
-.testimonials-slider {
-    position: relative;
-    max-width: 800px;
-    margin: 0 auto;
-    overflow: hidden;
-    min-height: 280px;
-}
-
-.testimonial-slide {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    opacity: 0;
-    transition: opacity var(--transition-normal);
-    text-align: center;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.testimonial-slide.active {
-    position: relative;
-    opacity: 1;
-}
-
-.quote-icon {
-    color: rgba(124, 58, 237, 0.15);
-    margin-bottom: 20px;
-}
-
-.testimonial-rating {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 15px;
-}
-
-.testimonial-rating svg {
-    fill: var(--gold-primary);
-    color: var(--gold-primary);
-    width: 18px;
-    height: 18px;
-}
-
-.testimonial-text {
-    font-size: 1.25rem;
-    font-style: italic;
-    color: var(--text-primary);
-    margin-bottom: 24px;
-    line-height: 1.5;
-}
-
-.testimonial-author {
-    font-family: var(--font-heading);
-    font-size: 1.15rem;
-    font-weight: 600;
-}
-
-.testimonial-role {
-    font-size: 0.85rem;
-    color: var(--gold-primary);
-}
-
-/* CONTACT & MAP SECTION */
-.contact-section {
-    background: var(--bg-surface);
-}
-
-.contact-grid {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr;
-    gap: 50px;
-    align-items: center;
-}
-
-.contact-info-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-.contact-info-card {
-    display: flex;
-    align-items: flex-start;
-    gap: 20px;
-    padding: 24px;
-}
-
-.contact-icon-wrapper {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: rgba(124, 58, 237, 0.08);
-    border: 1px solid var(--gold-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--gold-primary);
-    flex-shrink: 0;
-}
-
-.contact-card-title {
-    font-size: 1.1rem;
-    margin-bottom: 4px;
-}
-
-.contact-card-value {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-}
-
-.map-wrapper {
-    width: 100%;
-    height: 400px;
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    border: 1px solid var(--glass-border);
-    position: relative;
-}
-
-.map-wrapper iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
-}
-
-/* FOOTER */
-footer {
-    background: #eeedf5;
-    border-top: 1px solid var(--border-color);
-    padding: 70px 0 30px 0;
-}
-
-.footer-grid {
-    display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
-    gap: 40px;
-    margin-bottom: 50px;
-}
-
-.footer-brand p {
-    font-size: 0.95rem;
-    margin-top: 20px;
-    color: var(--text-secondary);
-}
-
-.footer-title {
-    font-size: 1.2rem;
-    margin-bottom: 24px;
-    position: relative;
-    padding-bottom: 8px;
-}
-
-.footer-title::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 35px;
-    height: 2px;
-    background: var(--gold-primary);
-}
-
-.footer-links {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.footer-link {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-}
-
-.footer-link:hover {
-    color: var(--gold-primary);
-    transform: translateX(4px);
-}
-
-.social-links {
-    display: flex;
-    gap: 12px;
-    margin-top: 10px;
-}
-
-.social-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: rgba(124, 58, 237, 0.04);
-    border: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-secondary);
-    transition: var(--transition-fast);
-}
-
-.social-btn:hover {
-    background: var(--gold-primary);
-    color: #ffffff;
-    border-color: var(--gold-primary);
-    transform: translateY(-3px);
-}
-
-.footer-bottom {
-    border-top: 1px solid var(--border-color);
-    padding-top: 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-.footer-bottom-links {
-    display: flex;
-    gap: 20px;
-}
-
-.footer-bottom-link:hover {
-    color: var(--text-secondary);
-}
-
-/* RESPONSIVE LAYOUTS */
-@media (max-width: 1024px) {
-    .hero-title {
-        font-size: 3rem;
+// A to Z Celebrations - REAL-TIME RESILIENT API (js/api.js)
+
+// Configurable Backend API URL
+// For local development or unified servers, leave this empty to use the same host.
+// For static hosting like Netlify, set this to your deployed Render/Railway backend URL
+// (e.g., 'https://a2z-celebrations-backend.onrender.com').
+// You can also set it dynamically in your browser console using: localStorage.setItem('azc_backend_url', 'https://...')
+const API_BASE_URL = localStorage.getItem('azc_backend_url') || 'https://a2z-backend-wdm7.onrender.com';
+
+// Resilient fetch helper that retries on network failures and server start-up errors (502/503/504)
+async function fetchWithRetry(url, options = {}, retries = 5, delay = 3000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const res = await fetch(url, options);
+            // Render cold start can cause 502 Bad Gateway, 503 Service Unavailable, or 504 Gateway Timeout
+            if (res.status === 502 || res.status === 503 || res.status === 504) {
+                throw new Error(`Server is waking up (Status ${res.status})`);
+            }
+            return res;
+        } catch (err) {
+            if (i === retries - 1) {
+                throw err; // Reached max retries, throw the error
+            }
+            console.warn(`[API Connection Warning] ${err.message}. Retrying in ${delay}ms... (${i + 1}/${retries})`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
     }
+}
+
+const API = {
+    // ----------------------------------------------------
+    // CUSTOMER ENDPOINTS
+    // ----------------------------------------------------
     
-    .contact-grid {
-        grid-template-columns: 1fr;
-        gap: 40px;
-    }
+    // Fetch Cities (Local)
+    fetchCities() {
+        return Promise.resolve(window.AppDB.getCities());
+    },
     
-    .footer-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 30px;
-    }
-}
+    // Fetch Venues, optionally filtered by city (Local)
+    fetchVenues(cityId = null) {
+        const venues = window.AppDB.getVenues();
+        const result = cityId ? venues.filter(v => v.cityId === cityId) : venues;
+        return Promise.resolve(result);
+    },
+    
+    // Fetch Add-ons (Local)
+    fetchAddons() {
+        return Promise.resolve(window.AppDB.getAddons());
+    },
+    
+    // Fetch Available Slots for a given Venue and Date (Server synced with strict validation)
+    async fetchSlotsAvailability(venueId, date) {
+        try {
+            const res = await fetchWithRetry(`${API_BASE_URL}/api/bookings/booked-slots?venueId=${venueId}&date=${encodeURIComponent(date)}`);
+            if (!res.ok) {
+                throw new Error("Failed to fetch slot availability from the server.");
+            }
+            const bookedSlotIds = await res.json();
+            
+            const slots = window.AppDB.getSlots(venueId);
+            return slots.map(s => {
+                const isBooked = bookedSlotIds.includes(s.id);
+                return { ...s, isBooked };
+            });
+        } catch (e) {
+            console.error("Failed to connect to the backend server for slot check:", e);
+            throw new Error("Unable to connect to the booking server. It might be offline or starting up. Please click a date to reload slots.");
+        }
+    },
+    
+    // Validate Coupon Code (Local)
+    validateCoupon(code, purchaseAmount) {
+        const coupons = window.AppDB.getCoupons();
+        const coupon = coupons.find(c => c.code.toUpperCase() === code.toUpperCase());
+        
+        if (!coupon) {
+            return Promise.reject(new Error("Invalid coupon code!"));
+        }
+        if (purchaseAmount < coupon.minPurchase) {
+            return Promise.reject(new Error(`Minimum purchase of ₹${coupon.minPurchase} required for this coupon!`));
+        }
+        return Promise.resolve(coupon);
+    },
+    
+    // Create new Booking (Server synced - NO silent local write fallbacks to prevent double-booking)
+    async createBooking(bookingInput) {
+        try {
+            const res = await fetchWithRetry(`${API_BASE_URL}/api/bookings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(bookingInput)
+            });
+            
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || "Failed to create booking");
+            }
+            
+            const newBooking = await res.json();
+            window.AppDB.saveBooking(newBooking); // Cache locally for client tracking
+            return newBooking;
+        } catch (e) {
+            console.error("Error submitting booking to backend server:", e);
+            throw new Error(e.message || "Failed to reach the booking server. Please verify your connection and try again.");
+        }
+    },
+    
+    // Track Booking (Customer - Server synced)
+    async trackBooking(bookingId, phone) {
+        try {
+            const res = await fetchWithRetry(`${API_BASE_URL}/api/bookings?id=${bookingId}&phone=${phone}`);
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || "No booking found.");
+            }
+            return await res.json();
+        } catch (e) {
+            // If the server explicitly says "No booking found", throw that error directly
+            if (e.message && e.message.includes("No booking found")) {
+                throw e;
+            }
+            console.warn("Backend server not reached. Falling back to local tracking cache:", e);
+            const bookings = window.AppDB.getBookings();
+            const b = bookings.find(x => x.id === bookingId && x.customerPhone === phone);
+            if (!b) {
+                throw new Error("No booking found with this ID and Phone Number combination. (Server unreachable)");
+            }
+            return b;
+        }
+    },
 
-@media (max-width: 576px) {
-    .hero-title {
-        font-size: 2.2rem;
-    }
-    
-    .hero-description {
-        font-size: 1rem;
-    }
-    
-    .footer-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .footer-bottom {
-        flex-direction: column;
-        gap: 15px;
-        text-align: center;
-    }
-    
-    .footer-bottom-links {
-        justify-content: center;
-    }
+    // Cancel Booking (Customer - Server synced)
+    async cancelCustomerBooking(bookingId, phone) {
+        try {
+            const res = await fetchWithRetry(`${API_BASE_URL}/api/bookings/${bookingId}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: 'cancelled' })
+            });
+            
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || "Failed to cancel booking.");
+            }
+            
+            await res.json();
+            window.AppDB.updateBookingStatus(bookingId, 'cancelled');
+            return { id: bookingId, status: 'cancelled' };
+        } catch (e) {
+            console.error("Failed to cancel booking on the server:", e);
+            throw new Error("Unable to cancel booking. The server is unreachable.");
+        }
+    },
 
-    /* Enhance Touch Targets */
-    .gallery-control-btn, .social-btn {
-        width: 48px !important;
-        height: 48px !important;
-        font-size: 1.2rem;
-    }
+    // ----------------------------------------------------
+    // ADMIN ENDPOINTS
+    // ----------------------------------------------------
     
-    .gallery-item {
-        min-width: 280px;
-        height: 350px;
+    // Admin Login Authentication (Server synced)
+    async adminLogin(username, password) {
+        try {
+            const res = await fetchWithRetry(`${API_BASE_URL}/api/admin/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+            
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || "Invalid username or password!");
+            }
+            
+            const data = await res.json();
+            sessionStorage.setItem("azc_auth_token", data.token);
+            return data;
+        } catch (e) {
+            console.error("Failed to login to server:", e);
+            throw new Error(e.message || "Failed to authenticate with the server. Please check your internet connection.");
+        }
+    },
+
+    // Admin Update Credentials (Server synced)
+    async updateAdminCredentials(newUsername, newPassword) {
+        try {
+            const res = await fetchWithRetry(`${API_BASE_URL}/api/admin/update-credentials`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: newUsername, password: newPassword })
+            });
+            
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || "Failed to update admin credentials.");
+            }
+            
+            return await res.json();
+        } catch (e) {
+            console.error("Failed to update credentials on server:", e);
+            throw new Error("Unable to update credentials. The server is unreachable.");
+        }
+    },
+    
+    // Admin Check Authentication State
+    checkAdminAuth() {
+        return sessionStorage.getItem("azc_auth_token") !== null;
+    },
+    
+    // Admin Logout
+    adminLogout() {
+        sessionStorage.removeItem("azc_auth_token");
+        return Promise.resolve(true);
+    },
+    
+    // Admin Get Bookings with Filters & Searching (Server synced)
+    async fetchAdminBookings(filters = {}) {
+        try {
+            let url = `${API_BASE_URL}/api/bookings?`;
+            if (filters.search) url += `search=${encodeURIComponent(filters.search)}&`;
+            if (filters.venueId) url += `venueId=${filters.venueId}&`;
+            if (filters.status) url += `status=${filters.status}&`;
+            if (filters.date) url += `date=${encodeURIComponent(filters.date)}&`;
+            
+            const res = await fetchWithRetry(url);
+            if (!res.ok) throw new Error("Failed to fetch bookings");
+            
+            const bookings = await res.json();
+            
+            // Synchronize full list to window.AppDB if no search filter is applied
+            if (!filters.search && (!filters.venueId || filters.venueId === 'all') && (!filters.status || filters.status === 'all') && !filters.date) {
+                window.AppDB.write("bookings", bookings);
+            }
+            
+            return bookings;
+        } catch (e) {
+            console.error("Failed to fetch bookings from server:", e);
+            throw new Error("Unable to retrieve bookings from the server. Please verify the server is running.");
+        }
+    },
+    
+    // Admin Update Booking Status (Approve / Reject / Cancel) (Server synced)
+    async updateBookingStatus(id, status) {
+        try {
+            const res = await fetchWithRetry(`${API_BASE_URL}/api/bookings/${id}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status })
+            });
+            
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || "Failed to update status");
+            }
+            
+            const data = await res.json();
+            window.AppDB.updateBookingStatus(id, status);
+            return { success: true, id, status };
+        } catch (e) {
+            console.error("Failed to update status on server:", e);
+            throw new Error(e.message || "Unable to update booking status. Server connection failed.");
+        }
+    },
+    
+    // Admin Update full Booking details (Server synced)
+    async updateBookingDetails(booking) {
+        try {
+            const res = await fetchWithRetry(`${API_BASE_URL}/api/bookings/${booking.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(booking)
+            });
+            
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || "Failed to update booking");
+            }
+            
+            await res.json();
+            window.AppDB.updateBookingDetails(booking);
+            return { success: true, booking };
+        } catch (e) {
+            console.error("Failed to update booking details on server:", e);
+            throw new Error("Unable to save booking changes. Server connection failed.");
+        }
+    },
+    
+    // Admin Delete Booking (Server synced)
+    async deleteBooking(id) {
+        try {
+            const res = await fetchWithRetry(`${API_BASE_URL}/api/bookings/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || "Failed to delete booking");
+            }
+            
+            await res.json();
+            window.AppDB.deleteBooking(id);
+            return { success: true, id };
+        } catch (e) {
+            console.error("Failed to delete booking on server:", e);
+            throw new Error("Unable to delete booking. Server connection failed.");
+        }
+    },
+    
+    // Admin Fetch Analytics Stats & Charts Data (Server synced)
+    async fetchAnalytics() {
+        // Fetch latest bookings list to sync AppDB local analytics computer cache
+        await this.fetchAdminBookings();
+        return window.AppDB.getAnalytics();
+    },
+    
+    // Admin Save Venue (Add or Edit) (Local placeholder)
+    saveVenue(venue) {
+        return Promise.resolve(window.AppDB.saveVenue(venue));
+    },
+    
+    // Admin Delete Venue (Local placeholder)
+    deleteVenue(id) {
+        return Promise.resolve(window.AppDB.deleteVenue(id));
+    },
+    
+    // Admin Save Addon (Add or Edit) (Local placeholder)
+    saveAddon(addon) {
+        return Promise.resolve(window.AppDB.saveAddon(addon));
+    },
+    
+    // Admin Delete Addon (Local placeholder)
+    deleteAddon(id) {
+        return Promise.resolve(window.AppDB.deleteAddon(id));
     }
-}
+};
+
+window.AppAPI = API;
