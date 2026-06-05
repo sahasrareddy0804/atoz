@@ -542,23 +542,6 @@ app.delete('/api/bookings/:id', async (req, res) => {
     }
 });
 
-// Debug Endpoint
-app.get('/api/debug-db', async (req, res) => {
-    try {
-        const bookings = await db.getBookings();
-        const rawBookings = db.bookings ? await db.bookings.find().toArray() : 'No MongoDB collection';
-        res.json({
-            bookings,
-            rawBookings,
-            env: {
-                MONGODB_URI: process.env.MONGODB_URI ? 'SET' : 'NOT SET'
-            }
-        });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
-
 // 7. Admin Login
 app.post('/api/admin/login', async (req, res) => {
     const { username, password } = req.body;
