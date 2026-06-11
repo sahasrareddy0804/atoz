@@ -136,24 +136,19 @@ const DB = {
         const now = new Date();
         
         bookings.forEach(b => {
-            if (b.status === "approved") {
+            if (b.status === "approved" || b.status === "pending") {
                 try {
                     if (b.date && b.slotTime) {
-                        const timeParts = b.slotTime.split(" - ");
-                        if (timeParts.length === 2) {
-                            const parseTime = (timeStr) => {
-                                const match = timeStr.match(/(\d+):(\d+)\s+(AM|PM)/i);
-                                if (!match) return null;
+                        const endTimeStr = b.slotTime.split(" - ")[1]; // e.g. "12:00 PM"
+                        if (endTimeStr) {
+                            const match = endTimeStr.match(/(\d+):(\d+)\s+(AM|PM)/i);
+                            if (match) {
                                 let hours = parseInt(match[1]);
                                 const mins = parseInt(match[2]);
                                 const ampm = match[3].toUpperCase();
                                 if (ampm === "PM" && hours < 12) hours += 12;
                                 if (ampm === "AM" && hours === 12) hours = 0;
-                                return { hours, mins };
-                            };
-                            const start = parseTime(timeParts[0]);
-                            const end = parseTime(timeParts[1]);
-                            if (start && end) {
+                                // Robust date parser supporting both dd/mm/yyyy and YYYY-MM-DD formats
                                 const parseDateString = (str) => {
                                     if (!str) return new Date();
                                     if (str.includes("/")) {
@@ -163,13 +158,7 @@ const DB = {
                                     return new Date(str);
                                 };
                                 const endDate = parseDateString(b.date);
-                                endDate.setHours(end.hours, end.mins, 0, 0);
-                                
-                                const startVal = start.hours * 60 + start.mins;
-                                const endVal = end.hours * 60 + end.mins;
-                                if (endVal < startVal) {
-                                    endDate.setDate(endDate.getDate() + 1);
-                                }
+                                endDate.setHours(hours, mins, 0, 0);
                                 
                                 if (now > endDate) {
                                     b.status = "completed";
