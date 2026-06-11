@@ -107,7 +107,6 @@ class FileDbProvider {
         const bookings = this._readBookings();
         return bookings.some(b => 
             b.id !== excludeBookingId &&
-            (!b._id || b._id.toString() !== excludeBookingId) &&
             b.venueId === venueId && 
             b.date === date && 
             b.slotId === slotId && 
@@ -139,14 +138,13 @@ class FileDbProvider {
 
     async updateBookingStatus(id, status) {
         const bookings = this._readBookings();
-        const idx = bookings.findIndex(b => b.id === id || (b._id && b._id.toString() === id));
+        const idx = bookings.findIndex(b => b.id === id);
         if (idx === -1) return null;
 
         const booking = bookings[idx];
         if (status === 'approved') {
             const alreadyApproved = bookings.some(item => 
                 item.id !== booking.id &&
-                (!item._id || item._id.toString() !== booking.id) &&
                 item.venueId === booking.venueId &&
                 item.date === booking.date &&
                 item.slotId === booking.slotId &&
@@ -164,7 +162,7 @@ class FileDbProvider {
 
     async updateBookingDetails(id, updatedBooking) {
         const bookings = this._readBookings();
-        const idx = bookings.findIndex(b => b.id === id || (b._id && b._id.toString() === id));
+        const idx = bookings.findIndex(b => b.id === id);
         if (idx === -1) return null;
 
         bookings[idx] = { ...bookings[idx], ...updatedBooking };
@@ -174,7 +172,7 @@ class FileDbProvider {
 
     async deleteBooking(id) {
         const bookings = this._readBookings();
-        const filtered = bookings.filter(b => b.id !== id && (!b._id || b._id.toString() !== id));
+        const filtered = bookings.filter(b => b.id !== id);
         if (bookings.length === filtered.length) return false;
 
         this._writeBookings(filtered);
@@ -202,7 +200,7 @@ class FileDbProvider {
 let MongoDbProvider = null;
 if (process.env.MONGODB_URI) {
     try {
-        const { MongoClient, ObjectId } = require('mongodb');
+        const { MongoClient } = require('mongodb');
         
         MongoDbProvider = class MongoDbProvider {
             constructor(uri) {
@@ -298,11 +296,7 @@ if (process.env.MONGODB_URI) {
                     status: { $in: ["pending", "approved"] }
                 };
                 if (excludeBookingId) {
-                    if (ObjectId.isValid(excludeBookingId)) {
-                        filter._id = { $ne: new ObjectId(excludeBookingId) };
-                    } else {
-                        filter.id = { $ne: excludeBookingId };
-                    }
+                    filter.id = { $ne: excludeBookingId };
                 }
                 const count = await this.bookings.countDocuments(filter);
                 return count > 0;
@@ -336,16 +330,12 @@ if (process.env.MONGODB_URI) {
             }
 
             async updateBookingStatus(id, status) {
-                const query = { $or: [{ id: id }] };
-                if (ObjectId.isValid(id)) {
-                    query.$or.push({ _id: new ObjectId(id) });
-                }
-                const booking = await this.bookings.findOne(query);
+                const booking = await this.bookings.findOne({ id });
                 if (!booking) return null;
 
                 if (status === 'approved') {
                     const alreadyApproved = await this.bookings.findOne({
-                        _id: { $ne: booking._id },
+                        id: { $ne: id },
                         venueId: booking.venueId,
                         date: booking.date,
                         slotId: booking.slotId,
@@ -356,32 +346,21 @@ if (process.env.MONGODB_URI) {
                     }
                 }
 
-                await this.bookings.updateOne({ _id: booking._id }, { $set: { status } });
+                await this.bookings.updateOne({ id }, { $set: { status } });
                 return { success: true, id, status };
             }
 
             async updateBookingDetails(id, updatedBooking) {
-                const query = { $or: [{ id: id }] };
-                if (ObjectId.isValid(id)) {
-                    query.$or.push({ _id: new ObjectId(id) });
-                }
-                const booking = await this.bookings.findOne(query);
-                if (!booking) return null;
-
                 const cleanUpdate = { ...updatedBooking };
                 delete cleanUpdate._id; // Prevent MongoDB immutability conflicts
                 
-                await this.bookings.updateOne({ _id: booking._id }, { $set: cleanUpdate });
-                const updated = await this.bookings.findOne({ _id: booking._id });
+                await this.bookings.updateOne({ id }, { $set: cleanUpdate });
+                const updated = await this.bookings.findOne({ id });
                 return updated;
             }
 
             async deleteBooking(id) {
-                const query = { $or: [{ id: id }] };
-                if (ObjectId.isValid(id)) {
-                    query.$or.push({ _id: new ObjectId(id) });
-                }
-                const result = await this.bookings.deleteOne(query);
+                const result = await this.bookings.deleteOne({ id });
                 return result.deletedCount > 0;
             }
 
