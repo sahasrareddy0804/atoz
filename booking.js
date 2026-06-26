@@ -304,7 +304,7 @@ class BookingWizard {
                 this.handleNavigation(1);
             }
         } else if (this.state.bookingType === "combo") {
-            if (this.state.bookingComboId && this.state.ledNickName && this.state.decorType) {
+            if (this.state.bookingComboId && this.state.decorType) {
                 this.handleNavigation(1);
             }
         }
@@ -484,19 +484,6 @@ class BookingWizard {
                 }
             }
             
-            // Capture custom details inputs for LED nickname and decoration type
-            const ledNickInput = document.getElementById("led-nick-name");
-            if (ledNickInput) {
-                ledNickInput.addEventListener("input", () => {
-                    this.state.ledNickName = ledNickInput.value.trim();
-                });
-                ledNickInput.addEventListener("blur", () => {
-                    if(typeof this.checkStep2Completion === 'function') this.checkStep2Completion();
-                });
-                ledNickInput.addEventListener("change", () => {
-                    if(typeof this.checkStep2Completion === 'function') this.checkStep2Completion();
-                });
-            }
             // Person Count button clicks
             document.querySelectorAll('.person-count-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -997,6 +984,7 @@ class BookingWizard {
 
     validateCustomerDetailsForm() {
         const name = document.getElementById("cust-name").value.trim();
+        const nickname = document.getElementById("cust-nickname").value.trim();
         const phone = document.getElementById("cust-phone").value.trim();
         const email = document.getElementById("cust-email").value.trim();
         const occasion = document.getElementById("cust-occasion").value;
@@ -1004,6 +992,10 @@ class BookingWizard {
         
         if (!name) {
             window.AppMain.showToast("Full Name is required!", "error");
+            return false;
+        }
+        if (!nickname) {
+            window.AppMain.showToast("Nickname for LED letter/Screen is required!", "error");
             return false;
         }
         if (!phone || phone.length < 10) {
@@ -1021,6 +1013,7 @@ class BookingWizard {
         
         // Save form state
         this.state.customerName = name;
+        this.state.ledNickName = nickname;
         this.state.customerPhone = phone;
         this.state.customerEmail = email;
         this.state.occasion = occasion;

@@ -804,12 +804,6 @@
                                 
                                 <div class="details-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
                                     <div class="form-group" style="margin-bottom: 0;">
-                                        <label class="form-label" for="led-nick-name">Nickname for LED letter/Screen *</label>
-                                        <input type="text" id="led-nick-name" class="form-control" placeholder="e.g. AMMY, SUNNY, SWEETY">
-                                        <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:5px; margin-bottom:0;">Enter the name to be spelled out using LED letters in the theatre.</p>
-                                    </div>
-                                    
-                                    <div class="form-group" style="margin-bottom: 0;">
                                         <label class="form-label" for="decor-type">Decoration Theme Type *</label>
                                         <select id="decor-type" class="form-control" style="background: var(--bg-dark); color: #fff; cursor: pointer;">
                                             <option value="" disabled selected>Select Occasion / Theme</option>
@@ -853,6 +847,10 @@
                                 <div class="form-group">
                                     <label class="form-label" for="cust-name">Full Name *</label>
                                     <input type="text" id="cust-name" class="form-control" placeholder="Enter your full name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="cust-nickname">Nickname for LED letter/Screen *</label>
+                                    <input type="text" id="cust-nickname" class="form-control" placeholder="e.g. AMMY, SUNNY, SWEETY" required>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="cust-phone">Phone Number * (10-digit)</label>
