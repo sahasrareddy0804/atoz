@@ -702,6 +702,117 @@ app.post('/api/admin/login', async (req, res) => {
     }
 });
 
+// 7.5. Run Migration manually
+app.get('/api/admin/run-migration', async (req, res) => {
+    try {
+        let revertedCount = 0;
+        let logs = [];
+        const now = new Date();
+
+        if (process.env.MONGODB_URI && MongoDbProvider) {
+            const completedBookings = await db.bookings.find({ status: "completed" }).toArray();
+            for (const b of completedBookings) {
+                if (b.date && b.slotTime) {
+                    const timeParts = b.slotTime.split(" - ");
+                    if (timeParts.length === 2) {
+                        const parseTime = (timeStr) => {
+                            const match = timeStr.match(/(\d+):(\d+)\s+(AM|PM)/i);
+                            if (!match) return null;
+                            let hours = parseInt(match[1]);
+                            const mins = parseInt(match[2]);
+                            const ampm = match[3].toUpperCase();
+                            if (ampm === "PM" && hours < 12) hours += 12;
+                            if (ampm === "AM" && hours === 12) hours = 0;
+                            return { hours, mins };
+                        };
+                        const start = parseTime(timeParts[0]);
+                        const end = parseTime(timeParts[1]);
+                        if (start && end) {
+                            const parseDateString = (str) => {
+                                if (!str) return new Date();
+                                if (str.includes("/")) {
+                                    const parts = str.split("/");
+                                    return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+                                }
+                                return new Date(str);
+                            };
+                            const endDate = parseDateString(b.date);
+                            endDate.setHours(end.hours, end.mins, 0, 0);
+                            
+                            const startVal = start.hours * 60 + start.mins;
+                            const endVal = end.hours * 60 + end.mins;
+                            if (endVal < startVal) {
+                                endDate.setDate(endDate.getDate() + 1);
+                            }
+                            
+                            if (now < endDate) {
+                                await db.bookings.updateOne({ _id: b._id }, { $set: { status: "pending" } });
+                                logs.push(`Reverted ${b.id} for '${b.customerName}' back to 'pending'`);
+                                revertedCount++;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            const bookings = db._readBookings();
+            bookings.forEach(b => {
+                if (b.status === "completed") {
+                    try {
+                        if (b.date && b.slotTime) {
+                            const timeParts = b.slotTime.split(" - ");
+                            if (timeParts.length === 2) {
+                                const parseTime = (timeStr) => {
+                                    const match = timeStr.match(/(\d+):(\d+)\s+(AM|PM)/i);
+                                    if (!match) return null;
+                                    let hours = parseInt(match[1]);
+                                    const mins = parseInt(match[2]);
+                                    const ampm = match[3].toUpperCase();
+                                    if (ampm === "PM" && hours < 12) hours += 12;
+                                    if (ampm === "AM" && hours === 12) hours = 0;
+                                    return { hours, mins };
+                                };
+                                const start = parseTime(timeParts[0]);
+                                const end = parseTime(timeParts[1]);
+                                if (start && end) {
+                                    const parseDateString = (str) => {
+                                        if (!str) return new Date();
+                                        if (str.includes("/")) {
+                                            const parts = str.split("/");
+                                            return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+                                        }
+                                        return new Date(str);
+                                    };
+                                    const endDate = parseDateString(b.date);
+                                    endDate.setHours(end.hours, end.mins, 0, 0);
+                                    
+                                    const startVal = start.hours * 60 + start.mins;
+                                    const endVal = end.hours * 60 + end.mins;
+                                    if (endVal < startVal) {
+                                        endDate.setDate(endDate.getDate() + 1);
+                                    }
+                                    
+                                    if (now < endDate) {
+                                        b.status = "pending";
+                                        logs.push(`Reverted local ${b.id} back to 'pending'`);
+                                        revertedCount++;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) {}
+                }
+            });
+            if (revertedCount > 0) {
+                db._writeBookings(bookings);
+            }
+        }
+        res.json({ success: true, revertedCount, logs });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 8. Admin Update Credentials
 app.post('/api/admin/update-credentials', async (req, res) => {
     const { username, password } = req.body;
