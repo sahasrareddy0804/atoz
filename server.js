@@ -618,7 +618,29 @@ app.get('/api/bookings', async (req, res) => {
 
         // Sort by createdAt descending
         bookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        res.json(bookings);
+        
+        // Strip paymentScreenshot to save bandwidth (returned in separate /api/bookings/:id endpoint)
+        const lightBookings = bookings.map(b => {
+            const { paymentScreenshot, ...rest } = b;
+            return rest;
+        });
+        
+        res.json(lightBookings);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get a single booking by ID (including screenshot)
+app.get('/api/bookings/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const bookings = await db.getBookings();
+        const b = bookings.find(x => x.id === id || (x._id && x._id.toString() === id));
+        if (!b) {
+            return res.status(404).json({ error: "Booking not found" });
+        }
+        res.json(b);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -825,6 +847,37 @@ app.post('/api/admin/update-credentials', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// 9. Debug Database Health Check
+app.get('/api/debug-db', async (req, res) => {
+    try {
+        const info = {
+            provider: db ? db.constructor.name : "null",
+            hasMongodbUri: !!process.env.MONGODB_URI,
+            envKeys: Object.keys(process.env).filter(k => k.toLowerCase().includes("mongo")),
+        };
+        
+        if (db) {
+            const start = Date.now();
+            try {
+                const bookings = await db.getBookings();
+                info.getBookingsCount = bookings.length;
+                info.getBookingsTimeMs = Date.now() - start;
+                info.success = true;
+            } catch (dbErr) {
+                info.success = false;
+                info.dbError = dbErr.message;
+                info.dbErrorStack = dbErr.stack;
+            }
+        } else {
+            info.success = false;
+            info.error = "No database provider initialized";
+        }
+        res.json(info);
+    } catch (err) {
+        res.status(500).json({ error: err.message, stack: err.stack });
     }
 });
 
