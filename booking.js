@@ -828,11 +828,15 @@ class BookingWizard {
             
             grid.innerHTML = addons.map(a => {
                 const isSelected = this.state.addons.some(selected => selected.id === a.id);
+                const isImageIcon = a.icon && (a.icon.includes("/") || a.icon.includes("."));
+                const imgHtml = isImageIcon 
+                    ? `<img class="addon-img" src="${a.icon}" alt="${a.name}" style="width: 100%; height: 100%; object-fit: cover;">`
+                    : `<div class="addon-img" style="display:flex; align-items:center; justify-content:center; font-size:2.2rem; background:rgba(255,255,255,0.03); height:100%">${a.icon}</div>`;
                 return `
                     <div class="glass-card addon-card ${isSelected ? 'selected' : ''}" data-id="${a.id}" data-name="${a.name}" data-price="${a.price}">
                         <div class="addon-checkbox"></div>
                         <div class="addon-img-wrapper">
-                            <div class="addon-img" style="display:flex; align-items:center; justify-content:center; font-size:2.2rem; background:rgba(255,255,255,0.03); height:100%">${a.icon}</div>
+                            ${imgHtml}
                         </div>
                         <h5 class="addon-name">${a.name}</h5>
                         <div style="font-weight:700; color:var(--gold-primary); text-align:center; font-size:0.95rem; margin-bottom:5px;">₹${a.price}</div>
