@@ -356,9 +356,9 @@ class AdminDashboard {
     }
 
     async viewReceipt(id) {
+        window.AppMain.showLoader(true);
         try {
-            const bookings = await window.AppAPI.fetchAdminBookings();
-            const b = bookings.find(item => item.id === id);
+            const b = await window.AppAPI.fetchBookingById(id);
             if (!b) return;
             
             const modal = document.getElementById("modal-receipt");
@@ -394,13 +394,17 @@ class AdminDashboard {
             }
             
             modal.style.display = "flex";
-        } catch(err) {}
+        } catch(err) {
+            window.AppMain.showToast(err.message, "error");
+        } finally {
+            window.AppMain.showLoader(false);
+        }
     }
 
     async viewBookingDetails(id) {
+        window.AppMain.showLoader(true);
         try {
-            const bookings = await window.AppAPI.fetchAdminBookings();
-            const b = bookings.find(item => item.id === id);
+            const b = await window.AppAPI.fetchBookingById(id);
             if (!b) return;
 
             const modal = document.getElementById("modal-booking-details");
@@ -521,7 +525,7 @@ class AdminDashboard {
             if (b.status === 'pending' || b.status === 'approved' || b.status === 'completed') {
                 btnCancel.style.display = "block";
                 btnCancel.onclick = async () => {
-                     if (confirm(`Are you sure you want to CANCEL booking ${b.id}? The slot will be instantly freed up.`)) {
+                    if (confirm(`Are you sure you want to CANCEL booking ${b.id}? The slot will be instantly freed up.`)) {
                         try {
                             window.AppMain.showLoader(true);
                             await window.AppAPI.updateBookingStatus(b.id, "cancelled");
@@ -543,6 +547,9 @@ class AdminDashboard {
             modal.style.display = "flex";
         } catch (err) {
             console.error(err);
+            window.AppMain.showToast("Failed to load booking details.", "error");
+        } finally {
+            window.AppMain.showLoader(false);
         }
     }
 }

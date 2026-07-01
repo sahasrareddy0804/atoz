@@ -271,6 +271,19 @@ const API = {
         }
     },
     
+    // Admin Get Single Booking by ID (Server synced)
+    async fetchBookingById(id) {
+        try {
+            const res = await fetchWithRetry(`${API_BASE_URL}/api/bookings/${id}`);
+            if (!res.ok) throw new Error("Failed to fetch booking details");
+            const booking = await res.json();
+            return booking;
+        } catch (e) {
+            console.error("Failed to fetch booking details from server:", e);
+            throw new Error("Unable to retrieve booking details. Server connection failed.");
+        }
+    },
+    
     // Admin Update full Booking details (Server synced)
     async updateBookingDetails(booking) {
         try {
