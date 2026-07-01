@@ -227,9 +227,13 @@ class AdminDashboard {
                 }
                 
                 if (dateVal) {
-                    filtered = filtered.filter(b =>
-                        (b.date || '').includes(dateVal)
-                    );
+                    const parts = dateVal.split("-");
+                    if (parts.length === 3) {
+                        const dateDMY = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        filtered = filtered.filter(b =>
+                            (b.date || '') === dateDMY
+                        );
+                    }
                 }
                 
                 this.renderBookingsTable(filtered);
@@ -243,6 +247,7 @@ class AdminDashboard {
             if (dateSearchInput && !dateSearchInput._bound) {
                 dateSearchInput._bound = true;
                 dateSearchInput.addEventListener("input", performFilter);
+                dateSearchInput.addEventListener("change", performFilter);
             }
         } catch (err) {
             tbody.innerHTML = `<tr><td colspan="5">Error loading data.</td></tr>`;
