@@ -16,7 +16,8 @@ const SEED_DATA = {
     
     addons: [
         { id: "a1", name: "Fog entry", price: 500, icon: "💨", description: "Dramatic fog entry effect covering the floor." },
-        { id: "a2", name: "Photography", price: 800, icon: "📸", description: "Professional photography session (80 photos)." },
+        { id: "a2_80", name: "Photography (80 Photos)", price: 800, icon: "📸", description: "Professional photography session (80 photos)." },
+        { id: "a2_40", name: "Photography (40 Photos)", price: 500, icon: "📸", description: "Professional photography session (40 photos)." },
         { id: "a3", name: "Rose bouquet", price: 500, icon: "💐", description: "Beautiful fresh rose bouquet." },
         { id: "c1_half", name: "Vanilla Cake (1/2 KG)", price: 500, icon: "🎂", description: "Fresh Vanilla Cake" },
         { id: "c1_full", name: "Vanilla Cake (1 KG)", price: 800, icon: "🎂", description: "Fresh Vanilla Cake" },

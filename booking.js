@@ -158,6 +158,7 @@ class BookingWizard {
             fileInput.addEventListener("change", (e) => {
                 const file = e.target.files[0];
                 if (file) this.handleScreenshotSelect(file);
+                fileInput.value = ""; // Reset so same file can be re-selected if needed
             });
             
             // Drag and drop
@@ -323,26 +324,16 @@ class BookingWizard {
                 return;
             }
             
-            // Show custom confirmation modal popup
-            const stepNames = {
-                1: "Screen & Slot Selection",
-                2: "Select Celebration Add-ons",
-                3: "Customer Details Form",
-                4: "Upload Transaction Payment",
-                5: "Complete Booking"
-            };
-            const nextStepName = stepNames[this.currentStep] || "Next Step";
-            const confirmed = await this.showConfirmationModal(
-                `Step ${this.currentStep} Completed!`,
-                `Would you like to proceed to the next step: ${nextStepName}?`,
-                nextStepName
-            );
-            if (!confirmed) {
-                this.isTransitioning = false;
-                return;
-            }
-            
             if (this.currentStep === 5) {
+                const confirmed = await this.showConfirmationModal(
+                    "Submit Reservation",
+                    "Are you sure you want to submit your celebration booking request?",
+                    "Submit"
+                );
+                if (!confirmed) {
+                    this.isTransitioning = false;
+                    return;
+                }
                 await this.submitFinalBooking();
                 this.isTransitioning = false;
                 return;
@@ -862,6 +853,15 @@ class BookingWizard {
                         card.classList.remove("selected");
                         this.state.addons = this.state.addons.filter(a => a.id !== id);
                     } else {
+                        // Mutually exclusive photography options
+                        if (id === "a2_80" || id === "a2_40") {
+                            const otherId = id === "a2_80" ? "a2_40" : "a2_80";
+                            const otherCard = grid.querySelector(`.addon-card[data-id="${otherId}"]`);
+                            if (otherCard && otherCard.classList.contains("selected")) {
+                                otherCard.classList.remove("selected");
+                                this.state.addons = this.state.addons.filter(a => a.id !== otherId);
+                            }
+                        }
                         card.classList.add("selected");
                         this.state.addons.push({ id, name, price });
                     }
