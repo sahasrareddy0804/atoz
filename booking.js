@@ -297,18 +297,8 @@ class BookingWizard {
     }
 
     checkStep2Completion() {
-        if (!this.state.venueId || !this.state.date || !this.state.slotId || !this.state.bookingType) {
-            return;
-        }
-        if (this.state.bookingType === "standard") {
-            if (this.state.standardDecor && this.state.personCount && this.state.yourName) {
-                this.handleNavigation(1);
-            }
-        } else if (this.state.bookingType === "combo") {
-            if (this.state.bookingComboId && this.state.decorType) {
-                this.handleNavigation(1);
-            }
-        }
+        // Disabled auto-navigation to allow natural typing without skipping step 3 (addons).
+        // The user must click the "Next Step" button which validates all inputs properly.
     }
 
     async handleNavigation(dir) {
@@ -719,7 +709,42 @@ class BookingWizard {
         try {
             const slots = await window.AppAPI.fetchSlotsAvailability(this.state.venueId, dateString);
             
-            listContainer.innerHTML = slots.map(s => {
+            // Filter out past slots if date is today
+            const today = new Date();
+            const todayString = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+            const isToday = dateString === todayString;
+            const now = new Date();
+
+            const parseTimeString = (timeStr, baseDate) => {
+                const parts = timeStr.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+                if (!parts) return null;
+                let hours = parseInt(parts[1], 10);
+                const minutes = parseInt(parts[2], 10);
+                const ampm = parts[3].toUpperCase();
+                
+                if (ampm === "PM" && hours < 12) hours += 12;
+                if (ampm === "AM" && hours === 12) hours = 0;
+                
+                const d = new Date(baseDate);
+                d.setHours(hours, minutes, 0, 0);
+                return d;
+            };
+
+            let availableSlots = slots;
+            if (isToday) {
+                availableSlots = slots.filter(s => {
+                    const startTimeStr = s.time.split(" - ")[0];
+                    const slotStartTime = parseTimeString(startTimeStr, today);
+                    return !slotStartTime || slotStartTime >= now;
+                });
+            }
+
+            if (availableSlots.length === 0) {
+                listContainer.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 20px 0;">No available slots left for today. Please select another date.</p>`;
+                return;
+            }
+            
+            listContainer.innerHTML = availableSlots.map(s => {
                 const btnClass = s.isBooked ? 'booked' : (this.state.slotId === s.id ? 'selected' : '');
                 const badgeText = s.isBooked ? 'Booked' : 'Available';
                 

@@ -376,7 +376,7 @@
                         <div style="color:#666; font-size:0.9rem;">Showing all entries</div>
                         <div style="display:flex; gap:10px;">
                             <input type="text" id="booking-search" placeholder="Search (Name, ID, Phone)..." style="padding:6px; border:1px solid #ccc; border-radius:4px; width:180px;">
-                            <input type="text" id="booking-date-search" placeholder="Search Date (dd/mm/yyyy)..." style="padding:6px; border:1px solid #ccc; border-radius:4px; width:180px;">
+                            <input type="date" id="booking-date-search" style="padding:6px; border:1px solid #ccc; border-radius:4px; width:180px;">
                             <button onclick="if(confirm('Are you sure you want to clear ALL bookings? This cannot be undone.')){ window.AppDB.clearAllBookings(); location.reload(); }" style="padding:6px 12px; background:#ef4444; color:white; border:none; border-radius:4px; cursor:pointer;">Reset Bookings</button>
                         </div>
                     </div>
