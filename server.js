@@ -6,6 +6,66 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 8000;
 
+// -----------------------------------------------------------------------------
+// Database Helper Methods
+// -----------------------------------------------------------------------------
+function applyAutoStatusUpdates(bookings) {
+    let updated = false;
+    const updatedBookings = [];
+    const now = new Date();
+    
+    bookings.forEach(b => {
+        if (b.status === "approved" || b.status === "pending") {
+            try {
+                if (b.date && b.slotTime) {
+                    const timeParts = b.slotTime.split(" - ");
+                    if (timeParts.length === 2) {
+                        const parseTime = (timeStr) => {
+                            const match = timeStr.match(/(\d+):(\d+)\s+(AM|PM)/i);
+                            if (!match) return null;
+                            let hours = parseInt(match[1]);
+                            const mins = parseInt(match[2]);
+                            const ampm = match[3].toUpperCase();
+                            if (ampm === "PM" && hours < 12) hours += 12;
+                            if (ampm === "AM" && hours === 12) hours = 0;
+                            return { hours, mins };
+                        };
+                        const start = parseTime(timeParts[0]);
+                        const end = parseTime(timeParts[1]);
+                        if (start && end) {
+                            const parseDateString = (str) => {
+                                if (!str) return new Date();
+                                if (str.includes("/")) {
+                                    const parts = str.split("/");
+                                    return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+                                }
+                                return new Date(str);
+                            };
+                            const endDate = parseDateString(b.date);
+                            endDate.setHours(end.hours, end.mins, 0, 0);
+                            
+                            const startVal = start.hours * 60 + start.mins;
+                            const endVal = end.hours * 60 + end.mins;
+                            if (endVal < startVal) {
+                                endDate.setDate(endDate.getDate() + 1);
+                            }
+                            
+                            if (now > endDate) {
+                                b.status = (b.status === "approved") ? "completed" : "cancelled";
+                                updated = true;
+                                updatedBookings.push(b);
+                            }
+                        }
+                    }
+                }
+            } catch(e) {}
+        }
+    });
+    
+    return { bookings, updated, updatedBookings };
+}
+
+
 // Enable CORS and increase body parser limits for base64 screenshots
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -108,62 +168,16 @@ class FileDbProvider {
             const data = fs.readFileSync(BOOKINGS_FILE, 'utf8');
             const bookings = JSON.parse(data);
             
-            // Auto-complete checking
-            let updated = false;
-            const now = new Date();
-            bookings.forEach(b => {
-                if (b.status === "approved") {
-                    try {
-                        if (b.date && b.slotTime) {
-                            const timeParts = b.slotTime.split(" - ");
-                            if (timeParts.length === 2) {
-                                const parseTime = (timeStr) => {
-                                    const match = timeStr.match(/(\d+):(\d+)\s+(AM|PM)/i);
-                                    if (!match) return null;
-                                    let hours = parseInt(match[1]);
-                                    const mins = parseInt(match[2]);
-                                    const ampm = match[3].toUpperCase();
-                                    if (ampm === "PM" && hours < 12) hours += 12;
-                                    if (ampm === "AM" && hours === 12) hours = 0;
-                                    return { hours, mins };
-                                };
-                                const start = parseTime(timeParts[0]);
-                                const end = parseTime(timeParts[1]);
-                                if (start && end) {
-                                    const parseDateString = (str) => {
-                                        if (!str) return new Date();
-                                        if (str.includes("/")) {
-                                            const parts = str.split("/");
-                                            return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
-                                        }
-                                        return new Date(str);
-                                    };
-                                    const endDate = parseDateString(b.date);
-                                    endDate.setHours(end.hours, end.mins, 0, 0);
-                                    
-                                    const startVal = start.hours * 60 + start.mins;
-                                    const endVal = end.hours * 60 + end.mins;
-                                    if (endVal < startVal) {
-                                        endDate.setDate(endDate.getDate() + 1);
-                                    }
-                                    
-                                    if (now > endDate) {
-                                        b.status = "completed";
-                                        updated = true;
-                                    }
-                                }
-                            }
-                        }
-                    } catch(e) {}
-                }
-            });
+            // Apply auto status updates
+            const { bookings: updatedBookings, updated } = applyAutoStatusUpdates(bookings);
             
             if (updated) {
-                fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2));
+                fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(updatedBookings, null, 2));
             }
             
-            return bookings;
+            return updatedBookings;
         } catch (e) {
+            console.error('[FileDbProvider _readBookings] Error reading bookings:', e);
             return [];
         }
     }
@@ -184,7 +198,7 @@ class FileDbProvider {
             b.venueId === venueId && 
             b.date === date && 
             b.slotId === slotId && 
-            (b.status === "approved" || b.status === "pending")
+            (b.status === "approved" || b.status === "pending" || b.status === "completed")
         );
     }
 
@@ -223,7 +237,7 @@ class FileDbProvider {
                 item.venueId === booking.venueId &&
                 item.date === booking.date &&
                 item.slotId === booking.slotId &&
-                item.status === "approved"
+                (item.status === "approved" || item.status === "completed")
             );
             if (alreadyApproved) {
                 throw new Error("This slot is already booked and approved for another customer.");
@@ -383,54 +397,17 @@ if (process.env.MONGODB_URI) {
                 for (let b of list) {
                     // Normalize MongoDB object to fit application model expectations
                     b.id = b.id || b._id.toString();
-                    
-                    if (b.status === "approved") {
-                        try {
-                            if (b.date && b.slotTime) {
-                                const timeParts = b.slotTime.split(" - ");
-                                if (timeParts.length === 2) {
-                                    const parseTime = (timeStr) => {
-                                        const match = timeStr.match(/(\d+):(\d+)\s+(AM|PM)/i);
-                                        if (!match) return null;
-                                        let hours = parseInt(match[1]);
-                                        const mins = parseInt(match[2]);
-                                        const ampm = match[3].toUpperCase();
-                                        if (ampm === "PM" && hours < 12) hours += 12;
-                                        if (ampm === "AM" && hours === 12) hours = 0;
-                                        return { hours, mins };
-                                    };
-                                    const start = parseTime(timeParts[0]);
-                                    const end = parseTime(timeParts[1]);
-                                    if (start && end) {
-                                        const parseDateString = (str) => {
-                                            if (!str) return new Date();
-                                            if (str.includes("/")) {
-                                                const parts = str.split("/");
-                                                return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
-                                            }
-                                            return new Date(str);
-                                        };
-                                        const endDate = parseDateString(b.date);
-                                        endDate.setHours(end.hours, end.mins, 0, 0);
-                                        
-                                        const startVal = start.hours * 60 + start.mins;
-                                        const endVal = end.hours * 60 + end.mins;
-                                        if (endVal < startVal) {
-                                            endDate.setDate(endDate.getDate() + 1);
-                                        }
-                                        
-                                        if (now > endDate) {
-                                            b.status = "completed";
-                                            await this.bookings.updateOne({ _id: b._id }, { $set: { status: "completed" } });
-                                        }
-                                    }
-                                }
-                            }
-                        } catch(e) {}
-                    }
                 }
                 
-                return list;
+                // Apply auto status updates
+                const { bookings: updatedList, updatedBookings } = applyAutoStatusUpdates(list);
+                
+                // Save updates back to Mongo
+                for (let b of updatedBookings) {
+                    await this.bookings.updateOne({ _id: b._id }, { $set: { status: b.status } });
+                }
+                
+                return updatedList;
             }
 
             async isSlotBooked(venueId, date, slotId, excludeBookingId = null) {
@@ -573,7 +550,7 @@ app.get('/api/bookings/booked-slots', async (req, res) => {
     try {
         const bookings = await db.getBookings();
         const bookedSlotIds = bookings
-            .filter(b => b.venueId === venueId && b.date === date && (b.status === "approved" || b.status === "pending"))
+            .filter(b => b.venueId === venueId && b.date === date && (b.status === "approved" || b.status === "pending" || b.status === "completed"))
             .map(b => b.slotId);
         
         res.json(bookedSlotIds);
@@ -632,6 +609,22 @@ app.post('/api/bookings', async (req, res) => {
         res.status(201).json(newBooking);
     } catch (error) {
         res.status(400).json({ error: error.message });
+    }
+});
+
+// 3.5. Get a single booking by ID (Admin)
+app.get('/api/bookings/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const bookings = await db.getBookings();
+        const booking = bookings.find(b => b.id === id || (b._id && b._id.toString() === id));
+        
+        if (!booking) {
+            return res.status(404).json({ error: "Booking not found" });
+        }
+        res.json(booking);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -871,12 +864,14 @@ app.get('/api/admin/slots', async (req, res) => {
 
     try {
         const allBookings = await db.getBookings();
+        console.log(`[API /api/admin/slots] queryDateDMY: ${queryDateDMY}, total bookings: ${allBookings.length}`);
 
-        // Get bookings for this date (pending or approved)
+        // Get bookings for this date (pending, approved, or completed)
         const dayBookings = allBookings.filter(b =>
             b.date === queryDateDMY &&
-            (b.status === "approved" || b.status === "pending")
+            (b.status === "approved" || b.status === "pending" || b.status === "completed")
         );
+        console.log(`[API /api/admin/slots] dayBookings count: ${dayBookings.length}`);
 
         // Build a lookup: slotId -> booking
         const slotBookingMap = {};

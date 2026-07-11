@@ -21,13 +21,8 @@ const EXPORTS = {
         // Set Title (Left Aligned with Large top margin)
         doc.setFont("helvetica", "bold");
         doc.setFontSize(28);
-        doc.setTextColor(0, 0, 0); // Black tone
-        doc.text("A To Z Celebrations -", 15, 25);
-        doc.text("Booking Details", 15, 36);
-
-        // Admin details
-        doc.setFontSize(14);
-        doc.text("Admin Details: 8123496627", 15, 46);
+        doc.setTextColor(26, 82, 118); // Modern blue tone
+        doc.text("AToZ Celebrations - Booking Details", 15, 30);
 
         // Helper to extract specific cake addon if it exists
         let cakeReq = "None";
@@ -107,33 +102,34 @@ const EXPORTS = {
         ];
 
         doc.autoTable({
-            startY: 52,
+            startY: 40,
             head: [['Field', 'Details']],
             body: tableData,
-            theme: 'striped',
+            theme: 'striped', // clean striped rows (white and very light gray)
             headStyles: {
-                fillColor: [41, 128, 185], // New Blue Background
-                textColor: [255, 255, 255], // White text
+                fillColor: [26, 82, 118], // Custom Blue Table Header Background
+                textColor: [255, 255, 255], // White
                 fontStyle: 'bold',
                 fontSize: 12,
-                cellPadding: 4
+                cellPadding: 3.5
             },
             bodyStyles: {
-                textColor: [0, 0, 0], // Black text
+                textColor: [50, 50, 50],
                 fontSize: 11,
-                cellPadding: 4,
-                fontStyle: 'bold' // Everything is bold in the image
+                cellPadding: 3.2,
+                fontStyle: 'normal'
             },
             columnStyles: {
-                0: { cellWidth: 70 },
+                0: { cellWidth: 55, fontStyle: 'bold', textColor: [30, 30, 30] },
                 1: { cellWidth: 'auto' }
             },
             alternateRowStyles: {
-                fillColor: [245, 245, 245]
+                fillColor: [248, 249, 250] // Very light gray alternating rows
             },
-            margin: { left: 15, right: 15, bottom: 20 },
+            margin: { left: 15, right: 15, top: 40, bottom: 20 },
             styles: {
-                overflow: 'linebreak'
+                overflow: 'linebreak',
+                lineWidth: 0 // Remove heavy borders between rows
             }
         });
 

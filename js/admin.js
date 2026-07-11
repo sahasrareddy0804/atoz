@@ -447,41 +447,25 @@ class AdminDashboard {
             const modal = document.getElementById("modal-receipt");
             const content = document.getElementById("receipt-content");
             
+            // The image uploaded by the user is stored as Base64 in b.paymentScreenshot
+            const screenshotHtml = b.paymentScreenshot
+                ? `<img src="${b.paymentScreenshot}" class="screenshot-img" alt="Payment Receipt"
+                       style="max-height: 60vh; object-fit: contain; width: 100%;
+                              border: 1px solid #ccc; border-radius: 8px; margin-top: 10px;
+                              display: block;">`
+                : `<div style="margin-top: 12px; padding: 24px; background: #f9f9f9; border: 2px dashed #ddd;
+                              border-radius: 8px; text-align: center; color: #aaa;">
+                       <div style="font-size: 2.5rem; margin-bottom: 8px;">🖼️</div>
+                       <p style="margin: 0; font-size: 0.9rem; font-weight: 600;">Payment Screenshot Not Uploaded</p>
+                       <p style="margin: 4px 0 0; font-size: 0.8rem;">The customer did not attach a payment screenshot.</p>
+                   </div>`;
+
             content.innerHTML = `
                 <p><strong>Booking ID:</strong> ${b.id}</p>
                 <p><strong>Payment Time:</strong> ${new Date(b.createdAt).toLocaleString()}</p>
-                <p><strong>Amount:</strong> &#8377;${b.total}</p>
-                <div id="receipt-screenshot-wrap" style="margin-top:10px; border:1px solid #ccc; border-radius:4px; min-height:150px; display:flex; align-items:center; justify-content:center; background:#f9f9f9;">
-                    ${b.paymentScreenshot
-                        ? `<img src="${b.paymentScreenshot}" class="screenshot-img" alt="Payment Receipt" style="max-height:60vh; object-fit:contain; width:100%; border-radius:4px;">`
-                        : `<div style="text-align:center; color:#888; padding:20px;">
-                               <div style="font-size:1.5rem; margin-bottom:8px;">⏳</div>
-                               <div id="screenshot-status">Waking up server to fetch screenshot...</div>
-                               <div style="font-size:0.8rem; margin-top:5px; color:#aaa;">This may take 30–60 seconds on first load</div>
-                           </div>`
-                    }
-                </div>
+                <p><strong>Amount:</strong> ₹${b.total}</p>
+                ${screenshotHtml}
             `;
-
-            // If screenshot not in local cache, fetch from server with 70s timeout
-            if (!b.paymentScreenshot) {
-                const API_BASE_URL = localStorage.getItem('azc_backend_url') || 'https://a2z-backend-wdm7.onrender.com';
-                fetch(`${API_BASE_URL}/api/bookings/${id}`)
-                    .then(r => r.ok ? r.json() : Promise.reject('not ok'))
-                    .then(serverBooking => {
-                        const wrap = document.getElementById('receipt-screenshot-wrap');
-                        if (!wrap) return;
-                        if (serverBooking && serverBooking.paymentScreenshot) {
-                            wrap.innerHTML = `<img src="${serverBooking.paymentScreenshot}" class="screenshot-img" alt="Payment Receipt" style="max-height:60vh; object-fit:contain; width:100%; border-radius:4px;">`;
-                        } else {
-                            wrap.innerHTML = `<div style="text-align:center; color:#999; padding:20px;">No screenshot was uploaded for this booking.</div>`;
-                        }
-                    })
-                    .catch(() => {
-                        const status = document.getElementById('screenshot-status');
-                        if (status) status.textContent = 'Could not load screenshot. Server may be offline.';
-                    });
-            }
 
             const actionsDiv = document.getElementById("receipt-actions");
             if (b.status === 'pending') {
@@ -489,6 +473,7 @@ class AdminDashboard {
                 const btnApprove = document.getElementById("modal-btn-approve");
                 const btnReject = document.getElementById("modal-btn-reject");
                 
+                // Remove old event listeners by cloning
                 const newBtnApprove = btnApprove.cloneNode(true);
                 const newBtnReject = btnReject.cloneNode(true);
                 btnApprove.parentNode.replaceChild(newBtnApprove, btnApprove);
@@ -594,39 +579,19 @@ class AdminDashboard {
                     </tbody>
                 </table>
                 <div style="margin-top: 15px;">
-                    <strong style="color:#555; display:block; margin-bottom:5px;">Payment Screenshot:</strong>
-                    <div id="booking-screenshot-wrap" style="border:1px solid #ccc; border-radius:4px; min-height:120px; display:flex; align-items:center; justify-content:center; background:#f9f9f9;">
-                        ${b.paymentScreenshot
-                            ? `<img src="${b.paymentScreenshot}" alt="Payment Screenshot" style="max-height:250px; object-fit:contain; width:100%; border-radius:4px;">`
-                            : `<div style="text-align:center; color:#888; padding:20px;">
-                                   <div style="font-size:1.3rem; margin-bottom:6px;">⏳</div>
-                                   <div>Waking up server... Screenshot loading</div>
-                                   <div style="font-size:0.78rem; margin-top:4px; color:#aaa;">May take 30–60 sec on first load</div>
-                               </div>`
-                        }
-                    </div>
+                    <strong style="color:#555; display:block; margin-bottom:8px;">Payment Screenshot:</strong>
+                    ${b.paymentScreenshot
+                        ? `<img src="${b.paymentScreenshot}" alt="Payment Screenshot"
+                               style="max-height: 250px; object-fit: contain; width: 100%;
+                                      border: 1px solid #ccc; border-radius: 6px; display: block;">`
+                        : `<div style="padding: 20px; background: #f9f9f9; border: 2px dashed #ddd;
+                                      border-radius: 6px; text-align: center; color: #aaa;">
+                               <div style="font-size: 2rem; margin-bottom: 6px;">🖼️</div>
+                               <p style="margin: 0; font-size: 0.85rem; font-weight: 600;">No Screenshot Uploaded</p>
+                           </div>`
+                    }
                 </div>
             `;
-
-            // If screenshot not in local cache, quietly fetch from server (no timeout - server needs time to wake up)
-            if (!b.paymentScreenshot) {
-                const API_BASE_URL = localStorage.getItem('azc_backend_url') || 'https://a2z-backend-wdm7.onrender.com';
-                fetch(`${API_BASE_URL}/api/bookings/${b.id}`)
-                    .then(r => r.ok ? r.json() : Promise.reject('not ok'))
-                    .then(serverBooking => {
-                        const wrap = document.getElementById('booking-screenshot-wrap');
-                        if (!wrap) return;
-                        if (serverBooking && serverBooking.paymentScreenshot) {
-                            wrap.innerHTML = `<img src="${serverBooking.paymentScreenshot}" alt="Payment Screenshot" style="max-height:250px; object-fit:contain; width:100%; border-radius:4px;">`;
-                        } else {
-                            wrap.innerHTML = `<div style="text-align:center; color:#999; padding:15px;">No screenshot uploaded for this booking.</div>`;
-                        }
-                    })
-                    .catch(() => {
-                        const wrap = document.getElementById('booking-screenshot-wrap');
-                        if (wrap) wrap.innerHTML = `<div style="text-align:center; color:#999; padding:15px;">Could not load screenshot. Server may be offline.</div>`;
-                    });
-            }
 
             const btnCancel = document.getElementById("btn-cancel-booking");
             const btnWhatsapp = document.getElementById("btn-whatsapp-receipt");
@@ -697,6 +662,9 @@ class AdminDashboard {
     initSlotAvailabilityView() {
         const datePicker = document.getElementById("sa-date-picker");
         if (!datePicker) return;
+
+        // Remove min restriction so admin can view ANY past date
+        datePicker.removeAttribute("min");
 
         // Default to today if no date is set yet
         if (!datePicker.value) {

@@ -768,10 +768,13 @@ class BookingWizard {
 
             let availableSlots = slots;
             if (isToday) {
-                availableSlots = slots.filter(s => {
+                availableSlots = slots.map(s => {
                     const startTimeStr = s.time.split(" - ")[0];
                     const slotStartTime = parseTimeString(startTimeStr, today);
-                    return !slotStartTime || slotStartTime >= now;
+                    if (slotStartTime && slotStartTime < now) {
+                        return { ...s, isPast: true };
+                    }
+                    return s;
                 });
             }
 
@@ -781,11 +784,12 @@ class BookingWizard {
             }
 
             listContainer.innerHTML = availableSlots.map(s => {
-                const btnClass = s.isBooked ? 'booked' : (this.state.slotId === s.id ? 'selected' : '');
-                const badgeText = s.isBooked ? 'Booked' : 'Available';
+                const isUnavailable = s.isBooked || s.isPast;
+                const btnClass = isUnavailable ? 'booked' : (this.state.slotId === s.id ? 'selected' : '');
+                const badgeText = s.isPast ? 'Passed' : (s.isBooked ? 'Booked' : 'Available');
 
                 return `
-                    <button class="slot-btn ${btnClass}" data-id="${s.id}" data-time="${s.time}" ${s.isBooked ? 'disabled' : ''}>
+                    <button class="slot-btn ${btnClass}" data-id="${s.id}" data-time="${s.time}" ${isUnavailable ? 'disabled' : ''}>
                         <span>${s.time}</span>
                         <span class="slot-status-badge">${badgeText}</span>
                     </button>

@@ -480,3 +480,49 @@
         padding: 20px;
     }
 }
+
+/* ──────────────────────────────────────────────────────────
+   MODAL RESPONSIVE FIXES
+   ────────────────────────────────────────────────────────── */
+
+/* Payment Receipt Modal */
+#modal-receipt > div,
+#modal-booking-details > div {
+    margin: 10px;
+    max-height: 92vh;
+}
+
+/* Booking details table — allow horizontal scroll on tiny screens */
+#booking-details-content table {
+    font-size: 0.85rem;
+}
+
+#booking-details-content table td {
+    padding: 8px 10px;
+    word-break: break-word;
+}
+
+/* Modal action buttons row */
+#modal-booking-details .modal-footer-btns,
+#modal-booking-details > div > div:last-child {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* Make each button in modal footer grow evenly on very small screens */
+@media (max-width: 480px) {
+    #modal-booking-details > div > div:last-child > button {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 100px;
+        text-align: center;
+        justify-content: center;
+    }
+
+    #modal-receipt > div {
+        padding: 14px;
+    }
+
+    #booking-details-content {
+        font-size: 0.85rem;
+    }
+}
