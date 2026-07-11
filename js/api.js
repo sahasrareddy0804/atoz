@@ -8,16 +8,22 @@
 const API_BASE_URL = localStorage.getItem('azc_backend_url') || 'https://a2z-backend-wdm7.onrender.com';
 
 // Resilient fetch helper that retries on network failures and server start-up errors (502/503/504)
-async function fetchWithRetry(url, options = {}, retries = 5, delay = 3000) {
+async function fetchWithRetry(url, options = {}, retries = 1, delay = 1000) {
     for (let i = 0; i < retries; i++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 800); // Strict 800ms timeout to bypass sleeping server
+
         try {
-            const res = await fetch(url, options);
+            const res = await fetch(url, { ...options, signal: controller.signal });
+            clearTimeout(timeoutId);
+
             // Render cold start can cause 502 Bad Gateway, 503 Service Unavailable, or 504 Gateway Timeout
             if (res.status === 502 || res.status === 503 || res.status === 504) {
                 throw new Error(`Server is waking up (Status ${res.status})`);
             }
             return res;
         } catch (err) {
+            clearTimeout(timeoutId);
             if (i === retries - 1) {
                 throw err; // Reached max retries, throw the error
             }
@@ -285,8 +291,24 @@ const API = {
             
             return bookings;
         } catch (e) {
-            console.error("Failed to fetch bookings from server:", e);
-            throw new Error("Unable to retrieve bookings from the server. Please verify the server is running.");
+            console.warn("Backend server not reached. Falling back to local tracking cache:", e);
+            if (window.AppDB) {
+                let localBookings = window.AppDB.getBookings() || [];
+                
+                // Apply optional filters if they were passed
+                if (filters.venueId && filters.venueId !== 'all') {
+                    localBookings = localBookings.filter(b => b.venueId === filters.venueId);
+                }
+                if (filters.status && filters.status !== 'all') {
+                    localBookings = localBookings.filter(b => b.status === filters.status);
+                }
+                if (filters.date) {
+                    localBookings = localBookings.filter(b => b.date === filters.date);
+                }
+                
+                return localBookings;
+            }
+            throw new Error("Unable to retrieve bookings. Server is unreachable and local cache is empty.");
         }
     },
     
@@ -310,20 +332,35 @@ const API = {
             window.AppDB.updateBookingStatus(id, status);
             return { success: true, id, status };
         } catch (e) {
-            console.error("Failed to update status on server:", e);
+            console.warn("Backend server not reached. Updating local cache only:", e);
+            if (window.AppDB) {
+                window.AppDB.updateBookingStatus(id, status);
+                return { success: true, id, status, offline: true };
+            }
             throw new Error(e.message || "Unable to update booking status. Server connection failed.");
         }
     },
     
-    // Admin Get Single Booking by ID (Server synced)
+    // Admin Get Single Booking by ID (Server synced - longer timeout needed for screenshot data)
     async fetchBookingById(id) {
+        // First check local cache for instant display while fetching from server
+        let localBooking = null;
+        if (window.AppDB) {
+            localBooking = window.AppDB.getBookings().find(x => x.id === id) || null;
+        }
+
+        // Try server with a generous 8-second timeout (screenshot is large Base64 data)
         try {
-            const res = await fetchWithRetry(`${API_BASE_URL}/api/bookings/${id}`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            const res = await fetch(`${API_BASE_URL}/api/bookings/${id}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
             if (!res.ok) throw new Error("Failed to fetch booking details");
             const booking = await res.json();
             return booking;
         } catch (e) {
-            console.error("Failed to fetch booking details from server:", e);
+            console.warn("Backend server not reached for booking detail. Using local cache:", e.message);
+            if (localBooking) return localBooking;
             throw new Error("Unable to retrieve booking details. Server connection failed.");
         }
     },
@@ -399,6 +436,71 @@ const API = {
     // Admin Delete Addon (Local placeholder)
     deleteAddon(id) {
         return Promise.resolve(window.AppDB.deleteAddon(id));
+    },
+
+    // Admin Slot Availability for a date (Server synced with local fallback)
+    async fetchAdminSlots(date, venueId = 'all') {
+        try {
+            let url = `${API_BASE_URL}/api/admin/slots?date=${encodeURIComponent(date)}`;
+            if (venueId && venueId !== 'all') url += `&venueId=${encodeURIComponent(venueId)}`;
+
+            const res = await fetchWithRetry(url);
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Failed to fetch slot availability');
+            }
+            return await res.json();
+        } catch (e) {
+            console.warn('[fetchAdminSlots] Backend unreachable, computing from local cache:', e.message);
+
+            // Local fallback: cross-reference AppDB slots vs bookings
+            const allSlots  = window.AppDB ? window.AppDB.getSlots() : (window.AppDB_SEED_DATA ? window.AppDB_SEED_DATA.slots : []);
+            const venues    = window.AppDB ? window.AppDB.getVenues() : (window.AppDB_SEED_DATA ? window.AppDB_SEED_DATA.venues : []);
+            const bookings  = window.AppDB ? window.AppDB.getBookings() : [];
+
+            // Normalise date to DD/MM/YYYY
+            let queryDateDMY = date;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                const [y, m, d] = date.split('-');
+                queryDateDMY = `${d}/${m}/${y}`;
+            }
+
+            const dayBookings = bookings.filter(b =>
+                b.date === queryDateDMY && (b.status === 'approved' || b.status === 'pending')
+            );
+            const slotBookingMap = {};
+            dayBookings.forEach(b => { slotBookingMap[b.slotId] = b; });
+
+            const venueMap = {};
+            venues.forEach(v => { venueMap[v.id] = v.name; });
+
+            let slotsToProcess = venueId && venueId !== 'all'
+                ? allSlots.filter(s => s.venueId === venueId)
+                : allSlots;
+
+            const slots = slotsToProcess.map(slot => {
+                const booking = slotBookingMap[slot.id];
+                if (booking) {
+                    return {
+                        slotId: slot.id, venueId: slot.venueId,
+                        venueName: venueMap[slot.venueId] || slot.venueId,
+                        time: slot.time, label: slot.label,
+                        booked: true, status: booking.status,
+                        booking: { id: booking.id, name: booking.customerName, phone: booking.customerPhone, occasion: booking.occasion, total: booking.total, bookingStatus: booking.status }
+                    };
+                }
+                return { slotId: slot.id, venueId: slot.venueId, venueName: venueMap[slot.venueId] || slot.venueId, time: slot.time, label: slot.label, booked: false, status: 'available' };
+            });
+
+            const bookedCount = slots.filter(s => s.booked).length;
+            const totalSlots  = slots.length;
+            return {
+                date: queryDateDMY, queryDate: date, totalSlots,
+                booked: bookedCount, available: totalSlots - bookedCount,
+                occupancy: totalSlots > 0 ? Math.round((bookedCount / totalSlots) * 100) : 0,
+                slots
+            };
+        }
     }
 };
 

@@ -20,9 +20,14 @@ const EXPORTS = {
 
         // Set Title (Left Aligned with Large top margin)
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(16);
-        doc.setTextColor(26, 82, 118); // Modern blue tone
-        doc.text("A2Z Private Theater - Booking Details", 15, 30);
+        doc.setFontSize(28);
+        doc.setTextColor(0, 0, 0); // Black tone
+        doc.text("A To Z Celebrations -", 15, 25);
+        doc.text("Booking Details", 15, 36);
+
+        // Admin details
+        doc.setFontSize(14);
+        doc.text("Admin Details: 8123496627", 15, 46);
 
         // Helper to extract specific cake addon if it exists
         let cakeReq = "None";
@@ -102,39 +107,38 @@ const EXPORTS = {
         ];
 
         doc.autoTable({
-            startY: 40,
+            startY: 52,
             head: [['Field', 'Details']],
             body: tableData,
-            theme: 'striped', // clean striped rows (white and very light gray)
+            theme: 'striped',
             headStyles: {
-                fillColor: [26, 82, 118], // Custom Blue Table Header Background
-                textColor: [255, 255, 255], // White
+                fillColor: [41, 128, 185], // New Blue Background
+                textColor: [255, 255, 255], // White text
                 fontStyle: 'bold',
-                fontSize: 9.5,
-                cellPadding: 3.5
+                fontSize: 12,
+                cellPadding: 4
             },
             bodyStyles: {
-                textColor: [50, 50, 50],
-                fontSize: 8.5,
-                cellPadding: 3.2,
-                fontStyle: 'normal'
+                textColor: [0, 0, 0], // Black text
+                fontSize: 11,
+                cellPadding: 4,
+                fontStyle: 'bold' // Everything is bold in the image
             },
             columnStyles: {
-                0: { cellWidth: 55, fontStyle: 'bold', textColor: [30, 30, 30] },
+                0: { cellWidth: 70 },
                 1: { cellWidth: 'auto' }
             },
             alternateRowStyles: {
-                fillColor: [248, 249, 250] // Very light gray alternating rows
+                fillColor: [245, 245, 245]
             },
-            margin: { left: 15, right: 15, top: 40, bottom: 20 },
+            margin: { left: 15, right: 15, bottom: 20 },
             styles: {
-                overflow: 'linebreak',
-                lineWidth: 0 // Remove heavy borders between rows
+                overflow: 'linebreak'
             }
         });
 
         // Save PDF
-        doc.save(`A2Z_Booking_${booking.id}.pdf`);
+        doc.save(`AToZ_Booking_${booking.id}.pdf`);
     },
 
     // ----------------------------------------------------
@@ -161,25 +165,25 @@ const EXPORTS = {
 
         // Brand Name
         doc.setFont("playfair", "bold");
-        doc.setFontSize(18);
+        doc.setFontSize(28);
         doc.setTextColor(212, 175, 55);
-        doc.text("A to Z Celebrations - Admin Panel", 20, 18);
+        doc.text("AToZ Celebrations - Admin Panel", 20, 18);
 
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
+        doc.setFontSize(14);
         doc.setTextColor(255,255,255);
         doc.text("Bookings Summary Report", 20, 25);
 
         doc.setTextColor(7, 7, 9);
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
+        doc.setFontSize(14);
         doc.text(`Generated: ${new Date().toLocaleString()}`, 220, 42);
 
         // Table Header
         doc.setFillColor(15, 15, 19);
         doc.rect(15, 48, 267, 8, 'F');
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(8.5);
+        doc.setFontSize(11);
         doc.setTextColor(255, 255, 255);
         
         doc.text("Booking ID", 18, 53);
@@ -234,7 +238,7 @@ const EXPORTS = {
         });
 
         // Save PDF
-        doc.save(`A2Z_Bookings_Report_${Date.now()}.pdf`);
+        doc.save(`AToZ_Bookings_Report_${Date.now()}.pdf`);
     },
 
     // ----------------------------------------------------

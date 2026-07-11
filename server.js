@@ -828,6 +828,118 @@ app.post('/api/admin/update-credentials', async (req, res) => {
     }
 });
 
+// 9. Admin Slot Availability for a given date (with optional venueId filter)
+app.get('/api/admin/slots', async (req, res) => {
+    const { date, venueId } = req.query;
+    if (!date) {
+        return res.status(400).json({ error: "Missing required 'date' parameter (YYYY-MM-DD or DD/MM/YYYY)." });
+    }
+
+    // Normalise the incoming date to DD/MM/YYYY (the format stored in bookings)
+    let queryDateDMY = date;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        const [y, m, d] = date.split('-');
+        queryDateDMY = `${d}/${m}/${y}`;
+    }
+
+    // All configured venue → slots (from seed data mirrored in the codebase)
+    const ALL_SLOTS = [
+        { id: "v1_s1", venueId: "v1", venueName: "SR Nagar - Screen 1: Garden Theme",      time: "09:00 AM - 12:00 PM", label: "Morning Magic" },
+        { id: "v1_s2", venueId: "v1", venueName: "SR Nagar - Screen 1: Garden Theme",      time: "12:30 PM - 03:30 PM", label: "Matinee Joy" },
+        { id: "v1_s3", venueId: "v1", venueName: "SR Nagar - Screen 1: Garden Theme",      time: "04:00 PM - 07:00 PM", label: "Sunset Romance" },
+        { id: "v1_s4", venueId: "v1", venueName: "SR Nagar - Screen 1: Garden Theme",      time: "07:30 PM - 10:30 PM", label: "Starry Night" },
+        { id: "v1_s5", venueId: "v1", venueName: "SR Nagar - Screen 1: Garden Theme",      time: "11:00 PM - 01:00 AM", label: "Midnight Show" },
+
+        { id: "v2_s1", venueId: "v2", venueName: "SR Nagar - Screen 2: Heart Shape Decor", time: "09:15 AM - 12:15 PM", label: "Morning Magic" },
+        { id: "v2_s2", venueId: "v2", venueName: "SR Nagar - Screen 2: Heart Shape Decor", time: "12:45 PM - 03:45 PM", label: "Matinee Joy" },
+        { id: "v2_s3", venueId: "v2", venueName: "SR Nagar - Screen 2: Heart Shape Decor", time: "04:15 PM - 07:15 PM", label: "Sunset Romance" },
+        { id: "v2_s4", venueId: "v2", venueName: "SR Nagar - Screen 2: Heart Shape Decor", time: "07:45 PM - 10:45 PM", label: "Starry Night" },
+        { id: "v2_s5", venueId: "v2", venueName: "SR Nagar - Screen 2: Heart Shape Decor", time: "11:00 PM - 01:00 AM", label: "Midnight Show" },
+
+        { id: "v3_s1", venueId: "v3", venueName: "SR Nagar - Screen 3: Ring Theme",        time: "09:30 AM - 12:30 PM", label: "Morning Magic" },
+        { id: "v3_s2", venueId: "v3", venueName: "SR Nagar - Screen 3: Ring Theme",        time: "01:00 PM - 04:00 PM", label: "Matinee Joy" },
+        { id: "v3_s3", venueId: "v3", venueName: "SR Nagar - Screen 3: Ring Theme",        time: "04:20 PM - 07:20 PM", label: "Sunset Romance" },
+        { id: "v3_s4", venueId: "v3", venueName: "SR Nagar - Screen 3: Ring Theme",        time: "07:45 PM - 10:45 PM", label: "Starry Night" },
+        { id: "v3_s5", venueId: "v3", venueName: "SR Nagar - Screen 3: Ring Theme",        time: "11:00 PM - 01:00 AM", label: "Midnight Show" },
+
+        { id: "v4_s1", venueId: "v4", venueName: "SR Nagar - Screen 4: Big Screen Theatre",time: "09:15 AM - 12:15 PM", label: "Morning Magic" },
+        { id: "v4_s2", venueId: "v4", venueName: "SR Nagar - Screen 4: Big Screen Theatre",time: "12:45 PM - 03:45 PM", label: "Matinee Joy" },
+        { id: "v4_s3", venueId: "v4", venueName: "SR Nagar - Screen 4: Big Screen Theatre",time: "04:15 PM - 07:15 PM", label: "Sunset Romance" },
+        { id: "v4_s4", venueId: "v4", venueName: "SR Nagar - Screen 4: Big Screen Theatre",time: "07:40 PM - 10:40 PM", label: "Starry Night" },
+        { id: "v4_s5", venueId: "v4", venueName: "SR Nagar - Screen 4: Big Screen Theatre",time: "11:00 PM - 01:00 AM", label: "Midnight Show" },
+    ];
+
+    try {
+        const allBookings = await db.getBookings();
+
+        // Get bookings for this date (pending or approved)
+        const dayBookings = allBookings.filter(b =>
+            b.date === queryDateDMY &&
+            (b.status === "approved" || b.status === "pending")
+        );
+
+        // Build a lookup: slotId -> booking
+        const slotBookingMap = {};
+        dayBookings.forEach(b => {
+            slotBookingMap[b.slotId] = b;
+        });
+
+        // Filter by venue if requested
+        let slotsToProcess = venueId && venueId !== 'all'
+            ? ALL_SLOTS.filter(s => s.venueId === venueId)
+            : ALL_SLOTS;
+
+        const slots = slotsToProcess.map(slot => {
+            const booking = slotBookingMap[slot.id];
+            if (booking) {
+                return {
+                    slotId: slot.id,
+                    venueId: slot.venueId,
+                    venueName: slot.venueName,
+                    time: slot.time,
+                    label: slot.label,
+                    booked: true,
+                    status: booking.status,
+                    booking: {
+                        id: booking.id,
+                        name: booking.customerName,
+                        phone: booking.customerPhone,
+                        occasion: booking.occasion,
+                        total: booking.total,
+                        bookingStatus: booking.status
+                    }
+                };
+            }
+            return {
+                slotId: slot.id,
+                venueId: slot.venueId,
+                venueName: slot.venueName,
+                time: slot.time,
+                label: slot.label,
+                booked: false,
+                status: "available"
+            };
+        });
+
+        const bookedCount  = slots.filter(s => s.booked).length;
+        const totalSlots   = slots.length;
+        const availableCount = totalSlots - bookedCount;
+        const occupancy    = totalSlots > 0 ? Math.round((bookedCount / totalSlots) * 100) : 0;
+
+        res.json({
+            date: queryDateDMY,
+            queryDate: date,
+            totalSlots,
+            booked: bookedCount,
+            available: availableCount,
+            occupancy,
+            slots
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Intercept /js/, /css/, and /assets/ requests to support flat-file deployments (fallback to root folder)
 app.use((req, res, next) => {
     const filePath = req.path;

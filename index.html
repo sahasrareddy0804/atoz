@@ -428,7 +428,7 @@
                 </div>
 
                 <div class="gallery-container">
-                    <div class="gallery-track" id="gallery-track-slider">
+                    <div class="gallery-grid" id="gallery-grid">
                         <div class="gallery-item">
                             <img src="assets/images/birthday_setup.jpg" class="gallery-img" loading="lazy"
                                 alt="Heart Birthday setup Katyayani" style="object-fit: cover;">
@@ -484,12 +484,27 @@
                                 alt="Non decoration setup" style="object-fit: cover;">
                             <div class="gallery-overlay"><span>🛋️ Non Decoration / Theatre Only</span></div>
                         </div>
+                        <div class="gallery-item video-item">
+                            <video src="assets/videos/video1.mp4" class="gallery-img" autoplay loop muted playsinline style="object-fit: cover;"></video>
+                            <div class="play-icon-overlay">▶</div>
+                            <div class="gallery-overlay"><span>🎬 Theatre Experience</span></div>
+                        </div>
+                        <div class="gallery-item video-item">
+                            <video src="assets/videos/video2.mp4" class="gallery-img" autoplay loop muted playsinline style="object-fit: cover;"></video>
+                            <div class="play-icon-overlay">▶</div>
+                            <div class="gallery-overlay"><span>🎂 Celebration Setup</span></div>
+                        </div>
+                        <div class="gallery-item video-item">
+                            <video src="assets/videos/video3.mp4" class="gallery-img" autoplay loop muted playsinline style="object-fit: cover;"></video>
+                            <div class="play-icon-overlay">▶</div>
+                            <div class="gallery-overlay"><span>💖 Romantic Setup</span></div>
+                        </div>
+                        <div class="gallery-item video-item">
+                            <video src="assets/videos/video4.mp4" class="gallery-img" autoplay loop muted playsinline style="object-fit: cover;"></video>
+                            <div class="play-icon-overlay">▶</div>
+                            <div class="gallery-overlay"><span>🎉 Surprise Entry</span></div>
+                        </div>
                     </div>
-                </div>
-
-                <div class="gallery-controls">
-                    <button class="gallery-control-btn" id="gallery-prev" aria-label="Previous image">&larr;</button>
-                    <button class="gallery-control-btn" id="gallery-next" aria-label="Next image">&rarr;</button>
                 </div>
             </div>
         </section>
@@ -1722,6 +1737,14 @@
             </div>
         </div>
     </div>
+    <!-- Gallery Lightbox Modal -->
+    <div id="gallery-lightbox" class="gallery-lightbox">
+        <span class="lightbox-close" id="lightbox-close">&times;</span>
+        <div class="lightbox-content" id="lightbox-content">
+            <!-- Dynamic img or video will be injected here -->
+        </div>
+    </div>
+
 </body>
 
 </html>

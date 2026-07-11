@@ -1238,12 +1238,59 @@ class BookingWizard {
         const preview = document.getElementById("screenshot-preview");
         const previewImg = document.getElementById("screenshot-preview-img");
 
-        if (preview && previewImg) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                // Compress the image before uploading to prevent Payload Too Large errors
-                const img = new Image();
-                img.onload = () => {
+        if (!file) {
+            window.AppMain.showToast("No file selected. Please try again.", "error");
+            return;
+        }
+
+        // Validate file type
+        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif"];
+        if (!allowedTypes.includes(file.type) && !file.name.match(/\.(jpe?g|png|gif|webp|heic|heif)$/i)) {
+            window.AppMain.showToast("Invalid file type. Please upload a JPG, PNG, or WebP image.", "error");
+            return;
+        }
+
+        // Validate file size (max 15MB)
+        if (file.size > 15 * 1024 * 1024) {
+            window.AppMain.showToast("File too large. Maximum allowed size is 15MB.", "error");
+            return;
+        }
+
+        if (!preview || !previewImg) {
+            window.AppMain.showToast("Upload area not ready. Please try again.", "error");
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onerror = () => {
+            window.AppMain.showToast("Failed to read the file. Please try a different image.", "error");
+        };
+
+        reader.onload = (e) => {
+            if (!e.target || !e.target.result) {
+                window.AppMain.showToast("Could not read image data. Please try again.", "error");
+                return;
+            }
+
+            const img = new Image();
+
+            img.onerror = () => {
+                // If canvas compression fails (e.g. HEIC on some browsers), try using the raw data URL
+                try {
+                    const rawBase64 = e.target.result;
+                    previewImg.src = rawBase64;
+                    preview.style.display = "block";
+                    this.state.paymentScreenshot = rawBase64;
+                    window.AppMain.showToast("Screenshot uploaded successfully!", "success");
+                    setTimeout(() => this.handleNavigation(1), 500);
+                } catch (fallbackErr) {
+                    window.AppMain.showToast("Could not process this image format. Please use JPG or PNG.", "error");
+                }
+            };
+
+            img.onload = () => {
+                try {
                     const canvas = document.createElement("canvas");
                     const MAX_WIDTH = 800;
                     const MAX_HEIGHT = 800;
@@ -1252,18 +1299,20 @@ class BookingWizard {
 
                     if (width > height) {
                         if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
+                            height = Math.round(height * MAX_WIDTH / width);
                             width = MAX_WIDTH;
                         }
                     } else {
                         if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
+                            width = Math.round(width * MAX_HEIGHT / height);
                             height = MAX_HEIGHT;
                         }
                     }
+
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext("2d");
+                    if (!ctx) throw new Error("Canvas context unavailable");
                     ctx.drawImage(img, 0, 0, width, height);
 
                     // Get compressed base64 (jpeg, 0.7 quality)
@@ -1276,11 +1325,21 @@ class BookingWizard {
 
                     // Auto-transition to complete booking confirmation
                     setTimeout(() => this.handleNavigation(1), 500);
-                };
-                img.src = e.target.result;
+                } catch (canvasErr) {
+                    // Fallback: use raw base64 if compression fails
+                    const rawBase64 = e.target.result;
+                    previewImg.src = rawBase64;
+                    preview.style.display = "block";
+                    this.state.paymentScreenshot = rawBase64;
+                    window.AppMain.showToast("Screenshot uploaded (original quality).", "success");
+                    setTimeout(() => this.handleNavigation(1), 500);
+                }
             };
-            reader.readAsDataURL(file);
-        }
+
+            img.src = e.target.result;
+        };
+
+        reader.readAsDataURL(file);
     }
 
     // ----------------------------------------------------

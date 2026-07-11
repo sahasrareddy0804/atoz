@@ -123,6 +123,7 @@ class AdminDashboard {
         if (view === "dashboard") this.loadDashboardStats();
         if (view === "payments") this.loadManualPayments();
         if (view === "bookings") this.loadCustomerBookings();
+        if (view === "slot-availability") this.initSlotAvailabilityView();
 
         // Start auto-refresh for live views
         this.startAutoRefresh(view);
@@ -135,11 +136,12 @@ class AdminDashboard {
             this._autoRefreshInterval = null;
         }
         // Auto-refresh payments and bookings every 30 seconds
-        if (view === "payments" || view === "bookings" || view === "dashboard") {
+        if (view === "payments" || view === "bookings" || view === "dashboard" || view === "slot-availability") {
             this._autoRefreshInterval = setInterval(() => {
                 if (this.currentView === "payments") this.loadManualPayments();
                 else if (this.currentView === "bookings") this.loadCustomerBookings();
                 else if (this.currentView === "dashboard") this.loadDashboardStats();
+                else if (this.currentView === "slot-availability") this.refreshSlotView();
             }, 30000);
         }
     }
@@ -205,8 +207,6 @@ class AdminDashboard {
             const countEl = document.getElementById("bookings-total-count");
             if (countEl) countEl.textContent = `${bookings.length} total`;
 
-            this.renderBookingsTable(bookings);
-
             // Bind live search with simultaneous Date Filter
             const searchInput = document.getElementById("booking-search");
             const dateSearchInput = document.getElementById("booking-date-search");
@@ -261,23 +261,76 @@ class AdminDashboard {
                 this.renderBookingsTable(filtered);
             };
 
+            // Bind event listeners only once (avoid duplicate listeners on refresh)
             if (searchInput && !searchInput._bound) {
                 searchInput._bound = true;
-                searchInput.addEventListener("input", performFilter);
+                searchInput.addEventListener("input", () => {
+                    // Always read from latest _allBookings
+                    const searchV = searchInput.value.toLowerCase().trim();
+                    const dateV = dateSearchInput ? dateSearchInput.value.trim() : "";
+                    let f = this._allBookings || [];
+                    if (searchV) f = f.filter(b =>
+                        (b.id || '').toLowerCase().includes(searchV) ||
+                        (b.customerName || '').toLowerCase().includes(searchV) ||
+                        (b.customerPhone || '').toLowerCase().includes(searchV) ||
+                        (b.status || '').toLowerCase().includes(searchV)
+                    );
+                    if (dateV) {
+                        const tp = dateV.split("-");
+                        if (tp.length === 3) {
+                            const td = parseInt(tp[2], 10), tm = parseInt(tp[1], 10), ty = parseInt(tp[0], 10);
+                            f = f.filter(b => {
+                                const cp = (b.date || '').trim().split(/[\/\-]/);
+                                if (cp.length !== 3) return false;
+                                const [d, m, y] = cp[0].length === 4
+                                    ? [parseInt(cp[2],10), parseInt(cp[1],10), parseInt(cp[0],10)]
+                                    : [parseInt(cp[0],10), parseInt(cp[1],10), parseInt(cp[2],10)];
+                                return d === td && m === tm && y === ty;
+                            });
+                        }
+                    }
+                    this.renderBookingsTable(f);
+                });
             }
             
             if (dateSearchInput && !dateSearchInput._bound) {
                 dateSearchInput._bound = true;
-                dateSearchInput.addEventListener("input", performFilter);
-                dateSearchInput.addEventListener("change", performFilter);
+                dateSearchInput.addEventListener("input", () => {
+                    const searchV = searchInput ? searchInput.value.toLowerCase().trim() : "";
+                    const dateV = dateSearchInput.value.trim();
+                    let f = this._allBookings || [];
+                    if (searchV) f = f.filter(b =>
+                        (b.id || '').toLowerCase().includes(searchV) ||
+                        (b.customerName || '').toLowerCase().includes(searchV) ||
+                        (b.customerPhone || '').toLowerCase().includes(searchV) ||
+                        (b.status || '').toLowerCase().includes(searchV)
+                    );
+                    if (dateV) {
+                        const tp = dateV.split("-");
+                        if (tp.length === 3) {
+                            const td = parseInt(tp[2], 10), tm = parseInt(tp[1], 10), ty = parseInt(tp[0], 10);
+                            f = f.filter(b => {
+                                const cp = (b.date || '').trim().split(/[\/\-]/);
+                                if (cp.length !== 3) return false;
+                                const [d, m, y] = cp[0].length === 4
+                                    ? [parseInt(cp[2],10), parseInt(cp[1],10), parseInt(cp[0],10)]
+                                    : [parseInt(cp[0],10), parseInt(cp[1],10), parseInt(cp[2],10)];
+                                return d === td && m === tm && y === ty;
+                            });
+                        }
+                    }
+                    this.renderBookingsTable(f);
+                });
+                dateSearchInput.addEventListener("change", () => dateSearchInput.dispatchEvent(new Event("input")));
             }
 
-            // Apply filter immediately in case inputs are pre-filled or during refresh
+            // Apply filter immediately to respect any pre-filled inputs or active filter on auto-refresh
             performFilter();
         } catch (err) {
             tbody.innerHTML = `<tr><td colspan="5">Error loading data.</td></tr>`;
         }
     }
+
 
     renderBookingsTable(bookings) {
         const tbody = document.getElementById("bookings-table-body");
@@ -394,16 +447,41 @@ class AdminDashboard {
             const modal = document.getElementById("modal-receipt");
             const content = document.getElementById("receipt-content");
             
-            // The image uploaded by the user is stored as Base64 in b.paymentScreenshot
-            // Since this is a demo, we show a dummy payment receipt image if missing.
-            const imgUrl = b.paymentScreenshot || "https://images.unsplash.com/photo-1616077168079-7e09a6a70bb7?auto=format&fit=crop&w=400&q=80"; 
-            
             content.innerHTML = `
                 <p><strong>Booking ID:</strong> ${b.id}</p>
                 <p><strong>Payment Time:</strong> ${new Date(b.createdAt).toLocaleString()}</p>
-                <p><strong>Amount:</strong> ₹${b.total}</p>
-                <img src="${imgUrl}" class="screenshot-img" alt="Payment Receipt" style="max-height: 60vh; object-fit: contain; width: 100%; border: 1px solid #ccc; border-radius: 4px; margin-top: 10px;">
+                <p><strong>Amount:</strong> &#8377;${b.total}</p>
+                <div id="receipt-screenshot-wrap" style="margin-top:10px; border:1px solid #ccc; border-radius:4px; min-height:150px; display:flex; align-items:center; justify-content:center; background:#f9f9f9;">
+                    ${b.paymentScreenshot
+                        ? `<img src="${b.paymentScreenshot}" class="screenshot-img" alt="Payment Receipt" style="max-height:60vh; object-fit:contain; width:100%; border-radius:4px;">`
+                        : `<div style="text-align:center; color:#888; padding:20px;">
+                               <div style="font-size:1.5rem; margin-bottom:8px;">⏳</div>
+                               <div id="screenshot-status">Waking up server to fetch screenshot...</div>
+                               <div style="font-size:0.8rem; margin-top:5px; color:#aaa;">This may take 30–60 seconds on first load</div>
+                           </div>`
+                    }
+                </div>
             `;
+
+            // If screenshot not in local cache, fetch from server with 70s timeout
+            if (!b.paymentScreenshot) {
+                const API_BASE_URL = localStorage.getItem('azc_backend_url') || 'https://a2z-backend-wdm7.onrender.com';
+                fetch(`${API_BASE_URL}/api/bookings/${id}`)
+                    .then(r => r.ok ? r.json() : Promise.reject('not ok'))
+                    .then(serverBooking => {
+                        const wrap = document.getElementById('receipt-screenshot-wrap');
+                        if (!wrap) return;
+                        if (serverBooking && serverBooking.paymentScreenshot) {
+                            wrap.innerHTML = `<img src="${serverBooking.paymentScreenshot}" class="screenshot-img" alt="Payment Receipt" style="max-height:60vh; object-fit:contain; width:100%; border-radius:4px;">`;
+                        } else {
+                            wrap.innerHTML = `<div style="text-align:center; color:#999; padding:20px;">No screenshot was uploaded for this booking.</div>`;
+                        }
+                    })
+                    .catch(() => {
+                        const status = document.getElementById('screenshot-status');
+                        if (status) status.textContent = 'Could not load screenshot. Server may be offline.';
+                    });
+            }
 
             const actionsDiv = document.getElementById("receipt-actions");
             if (b.status === 'pending') {
@@ -411,7 +489,6 @@ class AdminDashboard {
                 const btnApprove = document.getElementById("modal-btn-approve");
                 const btnReject = document.getElementById("modal-btn-reject");
                 
-                // Remove old event listeners by cloning
                 const newBtnApprove = btnApprove.cloneNode(true);
                 const newBtnReject = btnReject.cloneNode(true);
                 btnApprove.parentNode.replaceChild(newBtnApprove, btnApprove);
@@ -518,9 +595,38 @@ class AdminDashboard {
                 </table>
                 <div style="margin-top: 15px;">
                     <strong style="color:#555; display:block; margin-bottom:5px;">Payment Screenshot:</strong>
-                    <img src="${b.paymentScreenshot || 'https://images.unsplash.com/photo-1616077168079-7e09a6a70bb7?auto=format&fit=crop&w=400&q=80'}" alt="Payment Screenshot" style="max-height: 250px; object-fit: contain; width: 100%; border: 1px solid #ccc; border-radius: 4px;">
+                    <div id="booking-screenshot-wrap" style="border:1px solid #ccc; border-radius:4px; min-height:120px; display:flex; align-items:center; justify-content:center; background:#f9f9f9;">
+                        ${b.paymentScreenshot
+                            ? `<img src="${b.paymentScreenshot}" alt="Payment Screenshot" style="max-height:250px; object-fit:contain; width:100%; border-radius:4px;">`
+                            : `<div style="text-align:center; color:#888; padding:20px;">
+                                   <div style="font-size:1.3rem; margin-bottom:6px;">⏳</div>
+                                   <div>Waking up server... Screenshot loading</div>
+                                   <div style="font-size:0.78rem; margin-top:4px; color:#aaa;">May take 30–60 sec on first load</div>
+                               </div>`
+                        }
+                    </div>
                 </div>
             `;
+
+            // If screenshot not in local cache, quietly fetch from server (no timeout - server needs time to wake up)
+            if (!b.paymentScreenshot) {
+                const API_BASE_URL = localStorage.getItem('azc_backend_url') || 'https://a2z-backend-wdm7.onrender.com';
+                fetch(`${API_BASE_URL}/api/bookings/${b.id}`)
+                    .then(r => r.ok ? r.json() : Promise.reject('not ok'))
+                    .then(serverBooking => {
+                        const wrap = document.getElementById('booking-screenshot-wrap');
+                        if (!wrap) return;
+                        if (serverBooking && serverBooking.paymentScreenshot) {
+                            wrap.innerHTML = `<img src="${serverBooking.paymentScreenshot}" alt="Payment Screenshot" style="max-height:250px; object-fit:contain; width:100%; border-radius:4px;">`;
+                        } else {
+                            wrap.innerHTML = `<div style="text-align:center; color:#999; padding:15px;">No screenshot uploaded for this booking.</div>`;
+                        }
+                    })
+                    .catch(() => {
+                        const wrap = document.getElementById('booking-screenshot-wrap');
+                        if (wrap) wrap.innerHTML = `<div style="text-align:center; color:#999; padding:15px;">Could not load screenshot. Server may be offline.</div>`;
+                    });
+            }
 
             const btnCancel = document.getElementById("btn-cancel-booking");
             const btnWhatsapp = document.getElementById("btn-whatsapp-receipt");
@@ -581,6 +687,387 @@ class AdminDashboard {
         } finally {
             window.AppMain.showLoader(false);
         }
+    }
+
+    // ============================================================
+    // SLOT AVAILABILITY FEATURE
+    // ============================================================
+
+    /** Called once when the view is first opened — sets today's date and loads */
+    initSlotAvailabilityView() {
+        const datePicker = document.getElementById("sa-date-picker");
+        if (!datePicker) return;
+
+        // Default to today if no date is set yet
+        if (!datePicker.value) {
+            const today = new Date();
+            const yyyy  = today.getFullYear();
+            const mm    = String(today.getMonth() + 1).padStart(2, "0");
+            const dd    = String(today.getDate()).padStart(2, "0");
+            datePicker.value = `${yyyy}-${mm}-${dd}`;
+        }
+        this.refreshSlotView();
+    }
+
+    /** Fetches slot data from the API and re-renders the entire view */
+    async refreshSlotView() {
+        const datePicker  = document.getElementById("sa-date-picker");
+        const venueFilter = document.getElementById("sa-venue-filter");
+        const dateLabel   = document.getElementById("sa-date-label");
+        const grid        = document.getElementById("sa-slot-grid");
+
+        if (!datePicker || !datePicker.value) return;
+
+        const dateVal  = datePicker.value; // YYYY-MM-DD
+        const venueVal = venueFilter ? venueFilter.value : "all";
+
+        // Update the friendly date label
+        if (dateLabel) {
+            const d = new Date(dateVal + "T00:00:00");
+            dateLabel.textContent = d.toLocaleDateString("en-IN", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+        }
+
+        if (grid) {
+            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; color:#aaa;">
+                <div style="font-size:2rem; margin-bottom:8px;">⏳</div>Loading slots…</div>`;
+        }
+
+        try {
+            const data = await window.AppAPI.fetchAdminSlots(dateVal, venueVal);
+            this._lastSlotData = data; // cache for export/print
+
+            // Update stat cards
+            const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            setEl("sa-stat-total",     data.totalSlots);
+            setEl("sa-stat-booked",    data.booked);
+            setEl("sa-stat-available", data.available);
+            setEl("sa-stat-occupancy", data.occupancy + "%");
+
+            // Occupancy bar
+            const bar   = document.getElementById("sa-occ-bar");
+            const barLbl= document.getElementById("sa-bar-label");
+            if (bar) bar.style.width = data.occupancy + "%";
+            if (barLbl) barLbl.textContent = `${data.booked} / ${data.totalSlots} slots booked`;
+
+            // Render slot cards
+            this.renderSlotGrid(data.slots, data.date);
+        } catch (err) {
+            if (grid) {
+                grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#ef4444;">
+                    ⚠️ Failed to load slot data: ${err.message}</div>`;
+            }
+            window.AppMain.showToast("Could not load slot availability: " + err.message, "error");
+        }
+    }
+
+    /** Renders color-coded slot cards into the grid */
+    renderSlotGrid(slots, displayDate) {
+        const grid = document.getElementById("sa-slot-grid");
+        if (!grid) return;
+
+        if (!slots || slots.length === 0) {
+            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#aaa;">
+                No slots configured for the selected filter.</div>`;
+            return;
+        }
+
+        // Group by venue for better readability
+        const byVenue = {};
+        slots.forEach(s => {
+            if (!byVenue[s.venueName]) byVenue[s.venueName] = [];
+            byVenue[s.venueName].push(s);
+        });
+
+        let html = "";
+
+        Object.keys(byVenue).forEach(venueName => {
+            const venueSlots = byVenue[venueName];
+
+            // Venue sub-heading spanning full width
+            html += `<div style="grid-column:1/-1; margin-top:10px; margin-bottom:4px;">
+                <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase;
+                    letter-spacing:1px; color:#4a73e8; background:#eef2ff;
+                    padding:4px 12px; border-radius:999px;">${venueName}</span>
+            </div>`;
+
+            venueSlots.forEach(slot => {
+                if (slot.booked) {
+                    // ─── BOOKED (Red) ───
+                    const bStatus = slot.booking.bookingStatus === "approved" ? "Approved" : "Pending";
+                    const statusColor = slot.booking.bookingStatus === "approved" ? "#10b981" : "#f59e0b";
+                    html += `
+                    <div onclick="window.AppAdminPanel.openSlotBookingModal(${JSON.stringify(slot).replace(/"/g, '&quot;')})"
+                         style="background:#fff; border-radius:10px; padding:16px 18px;
+                                border-left:5px solid #ef4444;
+                                box-shadow:0 2px 10px rgba(239,68,68,0.1);
+                                cursor:pointer; transition:transform 0.15s, box-shadow 0.15s;
+                                position:relative;"
+                         onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 18px rgba(239,68,68,0.18)'"
+                         onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(239,68,68,0.1)'">
+
+                        <!-- Status badge -->
+                        <span style="position:absolute; top:12px; right:12px; font-size:0.7rem;
+                                     font-weight:700; background:${statusColor}; color:#fff;
+                                     padding:2px 8px; border-radius:999px;">
+                            ${bStatus}
+                        </span>
+
+                        <!-- Time -->
+                        <div style="font-size:1rem; font-weight:700; color:#333; margin-bottom:6px;">
+                            🕐 ${slot.time}
+                        </div>
+                        <div style="font-size:0.75rem; color:#999; margin-bottom:10px;">${slot.label}</div>
+
+                        <!-- Red Booked indicator -->
+                        <div style="display:inline-flex; align-items:center; gap:5px;
+                                    background:#fef2f2; color:#ef4444; font-size:0.8rem;
+                                    font-weight:700; padding:3px 10px; border-radius:999px; margin-bottom:10px;">
+                            🔴 Booked
+                        </div>
+
+                        <!-- Customer info -->
+                        <div style="border-top:1px solid #f3f3f3; padding-top:10px; margin-top:6px;">
+                            <div style="font-size:0.88rem; font-weight:600; color:#333; margin-bottom:3px;">
+                                👤 ${slot.booking.name || "—"}
+                            </div>
+                            <div style="font-size:0.82rem; color:#666; margin-bottom:3px;">
+                                📞 ${slot.booking.phone || "—"}
+                            </div>
+                            <div style="font-size:0.82rem; color:#666;">
+                                🎉 ${slot.booking.occasion || "—"}
+                            </div>
+                        </div>
+                        <div style="margin-top:8px; font-size:0.75rem; color:#aaa; text-align:right;">
+                            Click to view full details ›
+                        </div>
+                    </div>`;
+                } else {
+                    // ─── AVAILABLE (Green) ───
+                    html += `
+                    <div style="background:#fff; border-radius:10px; padding:16px 18px;
+                                border-left:5px solid #10b981;
+                                box-shadow:0 2px 10px rgba(16,185,129,0.07);">
+
+                        <!-- Time -->
+                        <div style="font-size:1rem; font-weight:700; color:#333; margin-bottom:6px;">
+                            🕐 ${slot.time}
+                        </div>
+                        <div style="font-size:0.75rem; color:#999; margin-bottom:12px;">${slot.label}</div>
+
+                        <!-- Green Available indicator -->
+                        <div style="display:inline-flex; align-items:center; gap:5px;
+                                    background:#f0fdf4; color:#10b981; font-size:0.85rem;
+                                    font-weight:700; padding:4px 12px; border-radius:999px;">
+                            🟢 Available
+                        </div>
+                    </div>`;
+                }
+            });
+        });
+
+        grid.innerHTML = html;
+    }
+
+    /** Moves the date picker ±1 day and reloads */
+    shiftSlotDate(delta) {
+        const datePicker = document.getElementById("sa-date-picker");
+        if (!datePicker || !datePicker.value) return;
+
+        const current = new Date(datePicker.value + "T00:00:00");
+        current.setDate(current.getDate() + delta);
+
+        const yyyy = current.getFullYear();
+        const mm   = String(current.getMonth() + 1).padStart(2, "0");
+        const dd   = String(current.getDate()).padStart(2, "0");
+        datePicker.value = `${yyyy}-${mm}-${dd}`;
+
+        this.refreshSlotView();
+    }
+
+    /** Opens the slot booking detail modal for a booked slot */
+    openSlotBookingModal(slot) {
+        const modal   = document.getElementById("modal-slot-booking");
+        const content = document.getElementById("slot-booking-modal-content");
+        if (!modal || !content || !slot || !slot.booked) return;
+
+        const b = slot.booking;
+        const statusColor = b.bookingStatus === "approved" ? "#10b981" : "#f59e0b";
+        const statusLabel = b.bookingStatus === "approved" ? "✅ Approved" : "⏳ Pending Approval";
+
+        content.innerHTML = `
+            <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                <tr style="background:#fafafa;">
+                    <td style="padding:9px 12px; border:1px solid #eee; font-weight:600; color:#555; width:42%;">Booking ID</td>
+                    <td style="padding:9px 12px; border:1px solid #eee; color:#333;">${b.id || "—"}</td>
+                </tr>
+                <tr>
+                    <td style="padding:9px 12px; border:1px solid #eee; font-weight:600; color:#555;">Screen</td>
+                    <td style="padding:9px 12px; border:1px solid #eee; color:#333;">${slot.venueName}</td>
+                </tr>
+                <tr style="background:#fafafa;">
+                    <td style="padding:9px 12px; border:1px solid #eee; font-weight:600; color:#555;">Time Slot</td>
+                    <td style="padding:9px 12px; border:1px solid #eee; color:#333;">${slot.time}</td>
+                </tr>
+                <tr>
+                    <td style="padding:9px 12px; border:1px solid #eee; font-weight:600; color:#555;">Label</td>
+                    <td style="padding:9px 12px; border:1px solid #eee; color:#333;">${slot.label}</td>
+                </tr>
+                <tr style="background:#fafafa;">
+                    <td style="padding:9px 12px; border:1px solid #eee; font-weight:600; color:#555;">Customer Name</td>
+                    <td style="padding:9px 12px; border:1px solid #eee; color:#333;">${b.name || "—"}</td>
+                </tr>
+                <tr>
+                    <td style="padding:9px 12px; border:1px solid #eee; font-weight:600; color:#555;">Phone</td>
+                    <td style="padding:9px 12px; border:1px solid #eee; color:#333;">${b.phone || "—"}</td>
+                </tr>
+                <tr style="background:#fafafa;">
+                    <td style="padding:9px 12px; border:1px solid #eee; font-weight:600; color:#555;">Occasion</td>
+                    <td style="padding:9px 12px; border:1px solid #eee; color:#333;">${b.occasion || "—"}</td>
+                </tr>
+                <tr>
+                    <td style="padding:9px 12px; border:1px solid #eee; font-weight:600; color:#555;">Total Amount</td>
+                    <td style="padding:9px 12px; border:1px solid #eee; color:#333;">₹${b.total || "—"}</td>
+                </tr>
+                <tr style="background:#fafafa;">
+                    <td style="padding:9px 12px; border:1px solid #eee; font-weight:600; color:#555;">Status</td>
+                    <td style="padding:9px 12px; border:1px solid #eee;">
+                        <span style="background:${statusColor}; color:#fff; font-size:0.8rem;
+                                     font-weight:700; padding:3px 10px; border-radius:999px;">
+                            ${statusLabel}
+                        </span>
+                    </td>
+                </tr>
+            </table>
+            ${b.id ? `
+            <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+                <button onclick="window.AppAdminPanel.viewBookingDetails('${b.id}'); document.getElementById('modal-slot-booking').style.display='none';"
+                    style="padding:8px 16px; background:#4a73e8; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem;">
+                    📋 Open Full Details
+                </button>
+                ${b.phone ? `<button onclick="window.open('https://wa.me/91${b.phone.replace(/[^0-9]/g,'')}','_blank')"
+                    style="padding:8px 16px; background:#25d366; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem;">
+                    💬 WhatsApp
+                </button>` : ""}
+            </div>` : ""}
+        `;
+
+        modal.style.display = "flex";
+    }
+
+    /** Exports the currently loaded slot data as a CSV file */
+    exportSlotCSV() {
+        const data = this._lastSlotData;
+        if (!data || !data.slots || data.slots.length === 0) {
+            window.AppMain.showToast("No slot data to export. Please select a date first.", "error");
+            return;
+        }
+
+        const dateLabel = data.date || "N/A";
+        const rows = [
+            ["Date", "Screen", "Time Slot", "Label", "Status", "Booking ID", "Customer Name", "Phone", "Occasion", "Total Amount"]
+        ];
+
+        data.slots.forEach(s => {
+            if (s.booked) {
+                rows.push([
+                    dateLabel, s.venueName, s.time, s.label, "Booked",
+                    s.booking.id || "", s.booking.name || "", s.booking.phone || "",
+                    s.booking.occasion || "", s.booking.total || ""
+                ]);
+            } else {
+                rows.push([dateLabel, s.venueName, s.time, s.label, "Available", "", "", "", "", ""]);
+            }
+        });
+
+        const csvContent = rows.map(r =>
+            r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+        ).join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url  = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        const safeDate = dateLabel.replace(/\//g, "-");
+        link.href     = url;
+        link.download = `slot-schedule-${safeDate}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        window.AppMain.showToast("CSV exported successfully!", "success");
+    }
+
+    /** Opens a print-friendly slot schedule in a new window */
+    printSlotSchedule() {
+        const data = this._lastSlotData;
+        if (!data || !data.slots || data.slots.length === 0) {
+            window.AppMain.showToast("No slot data to print. Please select a date first.", "error");
+            return;
+        }
+
+        const dateLabel = data.date || "—";
+        const printWin  = window.open("", "_blank", "width=900,height=700");
+
+        let rows = "";
+        data.slots.forEach(s => {
+            const statusCell = s.booked
+                ? `<span style="background:#ef4444;color:#fff;padding:2px 8px;border-radius:999px;font-size:0.75rem;">Booked</span>`
+                : `<span style="background:#10b981;color:#fff;padding:2px 8px;border-radius:999px;font-size:0.75rem;">Available</span>`;
+            const cusName  = s.booked ? (s.booking.name  || "—") : "—";
+            const cusPhone = s.booked ? (s.booking.phone || "—") : "—";
+            const occasion = s.booked ? (s.booking.occasion || "—") : "—";
+            const bgColor  = s.booked ? "#fff5f5" : "#f0fdf4";
+
+            rows += `<tr style="background:${bgColor};">
+                <td style="padding:8px 10px; border:1px solid #eee;">${s.venueName}</td>
+                <td style="padding:8px 10px; border:1px solid #eee;">${s.time}</td>
+                <td style="padding:8px 10px; border:1px solid #eee;">${s.label}</td>
+                <td style="padding:8px 10px; border:1px solid #eee; text-align:center;">${statusCell}</td>
+                <td style="padding:8px 10px; border:1px solid #eee;">${cusName}</td>
+                <td style="padding:8px 10px; border:1px solid #eee;">${cusPhone}</td>
+                <td style="padding:8px 10px; border:1px solid #eee;">${occasion}</td>
+            </tr>`;
+        });
+
+        printWin.document.write(`<!DOCTYPE html><html><head>
+            <title>Slot Schedule – ${dateLabel}</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 30px; color: #333; }
+                h1 { color: #4a73e8; margin-bottom: 4px; font-size: 1.4rem; }
+                .meta { font-size: 0.85rem; color: #888; margin-bottom: 20px; }
+                .summary { display: flex; gap: 20px; margin-bottom: 20px; }
+                .stat { background: #f4f6f9; padding: 12px 20px; border-radius: 8px; text-align: center; }
+                .stat .val { font-size: 1.5rem; font-weight: 800; }
+                .stat .lbl { font-size: 0.75rem; color: #888; }
+                table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+                th { background: #4a73e8; color: #fff; padding: 10px; text-align: left; }
+                @media print { .no-print { display: none; } }
+            </style>
+        </head><body>
+            <h1>🗓️ A2Z Celebrations — Slot Schedule</h1>
+            <p class="meta">Date: <strong>${dateLabel}</strong> &nbsp;|&nbsp; Generated: ${new Date().toLocaleString("en-IN")}</p>
+            <div class="summary">
+                <div class="stat"><div class="val" style="color:#4a73e8;">${data.totalSlots}</div><div class="lbl">Total Slots</div></div>
+                <div class="stat"><div class="val" style="color:#ef4444;">${data.booked}</div><div class="lbl">Booked</div></div>
+                <div class="stat"><div class="val" style="color:#10b981;">${data.available}</div><div class="lbl">Available</div></div>
+                <div class="stat"><div class="val" style="color:#f59e0b;">${data.occupancy}%</div><div class="lbl">Occupancy</div></div>
+            </div>
+            <table>
+                <thead><tr>
+                    <th>Screen</th><th>Time Slot</th><th>Label</th><th>Status</th>
+                    <th>Customer</th><th>Phone</th><th>Occasion</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div class="no-print" style="margin-top:20px; text-align:center;">
+                <button onclick="window.print()" style="padding:10px 24px; background:#4a73e8; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:1rem;">
+                    🖨️ Print
+                </button>
+            </div>
+        </body></html>`);
+
+        printWin.document.close();
+        printWin.focus();
+        setTimeout(() => printWin.print(), 600);
     }
 }
 

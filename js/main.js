@@ -17,7 +17,7 @@ class MainApplication {
         this.initWhatsAppWidget();
         this.initHeroSlider();
         this.initTestimonialsSlider();
-        this.initGallerySlider();
+        this.initGalleryLightbox();
     }
 
     // ----------------------------------------------------
@@ -124,31 +124,52 @@ class MainApplication {
     }
 
     // ----------------------------------------------------
-    // GALLERY HORIZONTAL SCROLL SLIDER
+    // GALLERY LIGHTBOX
     // ----------------------------------------------------
-    initGallerySlider() {
-        const track = document.getElementById("gallery-track-slider");
-        const prev = document.getElementById("gallery-prev");
-        const next = document.getElementById("gallery-next");
-        
-        if (!track || !prev || !next) return;
-        
-        let scrollAmount = 0;
-        const stepWidth = 370; // width + gap
-        
-        next.addEventListener("click", () => {
-            const maxScroll = track.scrollWidth - track.clientWidth;
-            if (scrollAmount < maxScroll) {
-                scrollAmount += stepWidth;
-                track.style.transform = `translateX(-${scrollAmount}px)`;
-            }
+    initGalleryLightbox() {
+        const items = document.querySelectorAll('.gallery-item');
+        const lightbox = document.getElementById('gallery-lightbox');
+        const lightboxContent = document.getElementById('lightbox-content');
+        const closeBtn = document.getElementById('lightbox-close');
+
+        if (!lightbox) return;
+
+        items.forEach(item => {
+            item.addEventListener('click', () => {
+                lightboxContent.innerHTML = ''; // Clear previous
+
+                const img = item.querySelector('img');
+                const video = item.querySelector('video');
+
+                if (img) {
+                    const newImg = document.createElement('img');
+                    newImg.src = img.src;
+                    newImg.alt = img.alt || 'Gallery Image';
+                    lightboxContent.appendChild(newImg);
+                } else if (video) {
+                    const newVideo = document.createElement('video');
+                    newVideo.src = video.src;
+                    newVideo.controls = true;
+                    newVideo.autoplay = true;
+                    lightboxContent.appendChild(newVideo);
+                }
+
+                lightbox.classList.add('active');
+            });
         });
+
+        const closeLightbox = () => {
+            lightbox.classList.remove('active');
+            setTimeout(() => {
+                lightboxContent.innerHTML = '';
+            }, 300); // Wait for transition
+        };
+
+        if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
         
-        prev.addEventListener("click", () => {
-            if (scrollAmount > 0) {
-                scrollAmount -= stepWidth;
-                if (scrollAmount < 0) scrollAmount = 0;
-                track.style.transform = `translateX(-${scrollAmount}px)`;
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox || e.target === lightboxContent) {
+                closeLightbox();
             }
         });
     }
