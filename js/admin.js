@@ -149,7 +149,7 @@ class AdminDashboard {
     async loadDashboardStats() {
         try {
             const bookings = await window.AppAPI.fetchAdminBookings();
-            const totalRevenue = bookings.filter(b => b.status === "approved").reduce((sum, b) => sum + b.total, 0);
+            const totalRevenue = bookings.filter(b => b.status === "approved" || b.status === "completed").reduce((sum, b) => sum + b.total, 0);
             document.getElementById("stat-total-bookings").textContent = bookings.length;
             document.getElementById("stat-total-revenue").textContent = `₹${totalRevenue.toLocaleString()}`;
         } catch (err) {}

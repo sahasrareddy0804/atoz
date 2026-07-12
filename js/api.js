@@ -5,7 +5,9 @@
 // For static hosting like Netlify, set this to your deployed Render/Railway backend URL
 // (e.g., 'https://a2z-celebrations-backend.onrender.com').
 // You can also set it dynamically in your browser console using: localStorage.setItem('azc_backend_url', 'https://...')
-const API_BASE_URL = localStorage.getItem('azc_backend_url') || '';
+const API_BASE_URL =
+    localStorage.getItem("azc_backend_url") ||
+    "https://a2z-backend-wdm7.onrender.com";
 async function fetchWithRetry(url, options = {}, retries = 5, delay = 3000) {
     for (let i = 0; i < retries; i++) {
         try {
@@ -33,7 +35,7 @@ const API = {
     // ----------------------------------------------------
     // CUSTOMER ENDPOINTS
     // ----------------------------------------------------
-    
+
     // Fetch Cities (Local)
     fetchCities() {
         const local = window.AppDB ? window.AppDB.getCities() : [];
@@ -43,7 +45,7 @@ const API = {
         const fallback = window.AppDB_SEED_DATA ? window.AppDB_SEED_DATA.cities : [];
         return Promise.resolve(fallback);
     },
-    
+
     // Fetch Venues, optionally filtered by city (Local)
     fetchVenues(cityId = null) {
         const local = window.AppDB ? window.AppDB.getVenues() : [];
@@ -51,7 +53,7 @@ const API = {
         const result = cityId ? list.filter(v => v.cityId === cityId) : list;
         return Promise.resolve(result);
     },
-    
+
     // Fetch Add-ons (Local)
     fetchAddons() {
         const local = window.AppDB ? window.AppDB.getAddons() : [];
@@ -61,7 +63,7 @@ const API = {
         const fallback = window.AppDB_SEED_DATA ? window.AppDB_SEED_DATA.addons : [];
         return Promise.resolve(fallback);
     },
-    
+
     // Fetch Available Slots for a given Venue and Date (Server synced with fast timeout fallback)
     async fetchSlotsAvailability(venueId, date) {
         const getSlotsLocal = (bookedSlotIds = []) => {
@@ -88,7 +90,7 @@ const API = {
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
-            
+
             if (!res.ok) {
                 throw new Error("Failed to fetch slots");
             }
@@ -97,7 +99,7 @@ const API = {
         } catch (e) {
             clearTimeout(timeoutId);
             console.warn("Using offline / cached slot availability database due to slow response or startup latency:", e);
-            
+
             // Fallback: Check local bookings in AppDB memory cache
             let localBookedIds = [];
             try {
@@ -110,16 +112,16 @@ const API = {
             } catch (err) {
                 console.error("Local database read error:", err);
             }
-            
+
             return mapSlots(localBookedIds);
         }
     },
-    
+
     // Validate Coupon Code (Local)
     validateCoupon(code, purchaseAmount) {
         const coupons = window.AppDB.getCoupons();
         const coupon = coupons.find(c => c.code.toUpperCase() === code.toUpperCase());
-        
+
         if (!coupon) {
             return Promise.reject(new Error("Invalid coupon code!"));
         }
@@ -128,7 +130,7 @@ const API = {
         }
         return Promise.resolve(coupon);
     },
-    
+
     // Create new Booking (Server synced - NO silent local write fallbacks to prevent double-booking)
     async createBooking(bookingInput) {
         try {
@@ -139,12 +141,12 @@ const API = {
                 },
                 body: JSON.stringify(bookingInput)
             });
-            
+
             if (!res.ok) {
                 const errData = await res.json();
                 throw new Error(errData.error || "Failed to create booking");
             }
-            
+
             const newBooking = await res.json();
             window.AppDB.saveBooking(newBooking); // Cache locally for client tracking
             return newBooking;
@@ -153,7 +155,7 @@ const API = {
             throw new Error(e.message || "Failed to reach the booking server. Please verify your connection and try again.");
         }
     },
-    
+
     // Track Booking (Customer - Server synced)
     async trackBooking(bookingId, phone) {
         try {
@@ -188,12 +190,12 @@ const API = {
                 },
                 body: JSON.stringify({ status: 'cancelled' })
             });
-            
+
             if (!res.ok) {
                 const errData = await res.json();
                 throw new Error(errData.error || "Failed to cancel booking.");
             }
-            
+
             await res.json();
             window.AppDB.updateBookingStatus(bookingId, 'cancelled');
             return { id: bookingId, status: 'cancelled' };
@@ -206,7 +208,7 @@ const API = {
     // ----------------------------------------------------
     // ADMIN ENDPOINTS
     // ----------------------------------------------------
-    
+
     // Admin Login Authentication (Server synced)
     async adminLogin(username, password) {
         try {
@@ -217,12 +219,12 @@ const API = {
                 },
                 body: JSON.stringify({ username, password })
             });
-            
+
             if (!res.ok) {
                 const errData = await res.json();
                 throw new Error(errData.error || "Invalid username or password!");
             }
-            
+
             const data = await res.json();
             sessionStorage.setItem("azc_auth_token", data.token);
             return data;
@@ -242,30 +244,30 @@ const API = {
                 },
                 body: JSON.stringify({ username: newUsername, password: newPassword })
             });
-            
+
             if (!res.ok) {
                 const errData = await res.json();
                 throw new Error(errData.error || "Failed to update admin credentials.");
             }
-            
+
             return await res.json();
         } catch (e) {
             console.error("Failed to update credentials on server:", e);
             throw new Error("Unable to update credentials. The server is unreachable.");
         }
     },
-    
+
     // Admin Check Authentication State
     checkAdminAuth() {
         return sessionStorage.getItem("azc_auth_token") !== null;
     },
-    
+
     // Admin Logout
     adminLogout() {
         sessionStorage.removeItem("azc_auth_token");
         return Promise.resolve(true);
     },
-    
+
     // Admin Get Bookings with Filters & Searching (Server synced)
     async fetchAdminBookings(filters = {}) {
         try {
@@ -274,24 +276,24 @@ const API = {
             if (filters.venueId) url += `venueId=${filters.venueId}&`;
             if (filters.status) url += `status=${filters.status}&`;
             if (filters.date) url += `date=${encodeURIComponent(filters.date)}&`;
-            
+
             const res = await fetchWithRetry(url);
             if (!res.ok) throw new Error("Failed to fetch bookings");
-            
+
             const bookings = await res.json();
-            
+
             // Synchronize full list to window.AppDB if no search filter is applied
             if (!filters.search && (!filters.venueId || filters.venueId === 'all') && (!filters.status || filters.status === 'all') && !filters.date) {
                 window.AppDB.write("bookings", bookings);
             }
-            
+
             return bookings;
         } catch (e) {
             console.error("Failed to fetch bookings from server:", e);
             throw new Error("Unable to retrieve bookings from the server. Please verify the server is running.");
         }
     },
-    
+
     // Admin Update Booking Status (Approve / Reject / Cancel) (Server synced)
     async updateBookingStatus(id, status) {
         try {
@@ -302,12 +304,12 @@ const API = {
                 },
                 body: JSON.stringify({ status })
             });
-            
+
             if (!res.ok) {
                 const errData = await res.json();
                 throw new Error(errData.error || "Failed to update status");
             }
-            
+
             const data = await res.json();
             window.AppDB.updateBookingStatus(id, status);
             return { success: true, id, status };
@@ -316,7 +318,7 @@ const API = {
             throw new Error(e.message || "Unable to update booking status. Server connection failed.");
         }
     },
-    
+
     // Admin Get Single Booking by ID (Server synced)
     async fetchBookingById(id) {
         try {
@@ -329,7 +331,7 @@ const API = {
             throw new Error("Unable to retrieve booking details. Server connection failed.");
         }
     },
-    
+
     // Admin Update full Booking details (Server synced)
     async updateBookingDetails(booking) {
         try {
@@ -340,12 +342,12 @@ const API = {
                 },
                 body: JSON.stringify(booking)
             });
-            
+
             if (!res.ok) {
                 const errData = await res.json();
                 throw new Error(errData.error || "Failed to update booking");
             }
-            
+
             await res.json();
             window.AppDB.updateBookingDetails(booking);
             return { success: true, booking };
@@ -354,19 +356,19 @@ const API = {
             throw new Error("Unable to save booking changes. Server connection failed.");
         }
     },
-    
+
     // Admin Delete Booking (Server synced)
     async deleteBooking(id) {
         try {
             const res = await fetchWithRetry(`${API_BASE_URL}/api/bookings/${id}`, {
                 method: 'DELETE'
             });
-            
+
             if (!res.ok) {
                 const errData = await res.json();
                 throw new Error(errData.error || "Failed to delete booking");
             }
-            
+
             await res.json();
             window.AppDB.deleteBooking(id);
             return { success: true, id };
@@ -375,29 +377,29 @@ const API = {
             throw new Error("Unable to delete booking. Server connection failed.");
         }
     },
-    
+
     // Admin Fetch Analytics Stats & Charts Data (Server synced)
     async fetchAnalytics() {
         // Fetch latest bookings list to sync AppDB local analytics computer cache
         await this.fetchAdminBookings();
         return window.AppDB.getAnalytics();
     },
-    
+
     // Admin Save Venue (Add or Edit) (Local placeholder)
     saveVenue(venue) {
         return Promise.resolve(window.AppDB.saveVenue(venue));
     },
-    
+
     // Admin Delete Venue (Local placeholder)
     deleteVenue(id) {
         return Promise.resolve(window.AppDB.deleteVenue(id));
     },
-    
+
     // Admin Save Addon (Add or Edit) (Local placeholder)
     saveAddon(addon) {
         return Promise.resolve(window.AppDB.saveAddon(addon));
     },
-    
+
     // Admin Delete Addon (Local placeholder)
     deleteAddon(id) {
         return Promise.resolve(window.AppDB.deleteAddon(id));
@@ -419,9 +421,9 @@ const API = {
             console.warn('[fetchAdminSlots] Backend unreachable, computing from local cache:', e.message);
 
             // Local fallback: cross-reference AppDB slots vs bookings
-            const allSlots  = window.AppDB ? window.AppDB.getSlots() : (window.AppDB_SEED_DATA ? window.AppDB_SEED_DATA.slots : []);
-            const venues    = window.AppDB ? window.AppDB.getVenues() : (window.AppDB_SEED_DATA ? window.AppDB_SEED_DATA.venues : []);
-            const bookings  = window.AppDB ? window.AppDB.getBookings() : [];
+            const allSlots = window.AppDB ? window.AppDB.getSlots() : (window.AppDB_SEED_DATA ? window.AppDB_SEED_DATA.slots : []);
+            const venues = window.AppDB ? window.AppDB.getVenues() : (window.AppDB_SEED_DATA ? window.AppDB_SEED_DATA.venues : []);
+            const bookings = window.AppDB ? window.AppDB.getBookings() : [];
 
             // Normalise date to DD/MM/YYYY
             let queryDateDMY = date;
@@ -458,7 +460,7 @@ const API = {
             });
 
             const bookedCount = slots.filter(s => s.booked).length;
-            const totalSlots  = slots.length;
+            const totalSlots = slots.length;
             return {
                 date: queryDateDMY, queryDate: date, totalSlots,
                 booked: bookedCount, available: totalSlots - bookedCount,

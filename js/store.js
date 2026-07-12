@@ -306,9 +306,9 @@ const DB = {
         let pendingCount = 0;
         
         bookings.forEach(b => {
-            if (b.status === "approved") {
+            if (b.status === "approved" || b.status === "completed") {
                 totalRevenue += b.total;
-                approvedCount++;
+                if (b.status === "approved") approvedCount++;
             } else if (b.status === "pending") {
                 pendingCount++;
             }
@@ -327,7 +327,7 @@ const DB = {
         // Group by month
         const trends = {};
         bookings.forEach(b => {
-            if (b.status === "approved") {
+            if (b.status === "approved" || b.status === "completed") {
                 const parseDateString = (str) => {
                     if (!str) return new Date();
                     if (str.includes("/")) {
