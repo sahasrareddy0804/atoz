@@ -1,2 +1,6 @@
 .DS_Store
 .env
+node_modules/
+db/
+fetch_live_bookings.js
+migrate_bookings.js
