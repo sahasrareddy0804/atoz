@@ -1,0 +1,15 @@
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://a2z-backend-wdm7.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
