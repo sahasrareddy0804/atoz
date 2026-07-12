@@ -7,7 +7,9 @@
 // You can also set it dynamically in your browser console using: localStorage.setItem('azc_backend_url', 'https://...')
 const API_BASE_URL =
     localStorage.getItem("azc_backend_url") ||
-    "https://a2z-backend-wdm7.onrender.com";
+    (["localhost", "127.0.0.1"].includes(window.location.hostname) || window.location.hostname.startsWith("192.168.") || window.location.hostname.endsWith(".local")
+        ? "http://localhost:8000"
+        : "https://a2z-backend-wdm7.onrender.com");
 async function fetchWithRetry(url, options = {}, retries = 5, delay = 3000) {
     for (let i = 0; i < retries; i++) {
         try {
