@@ -736,130 +736,143 @@ class BookingWizard {
         }
     }
 
+    renderTimeSlotsList(slots, dateString) {
+        const listContainer = document.getElementById("slots-grid-container");
+        if (!listContainer) return;
+
+        // Filter out past slots if date is today
+        const today = new Date();
+        const todayString = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+        const isToday = dateString === todayString;
+        const now = new Date();
+
+        const parseTimeString = (timeStr, baseDate) => {
+            const parts = timeStr.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+            if (!parts) return null;
+            let hours = parseInt(parts[1], 10);
+            const minutes = parseInt(parts[2], 10);
+            const ampm = parts[3].toUpperCase();
+
+            if (ampm === "PM" && hours < 12) hours += 12;
+            if (ampm === "AM" && hours === 12) hours = 0;
+
+            const d = new Date(baseDate);
+            d.setHours(hours, minutes, 0, 0);
+            return d;
+        };
+
+        let availableSlots = slots;
+        if (isToday) {
+            availableSlots = slots.map(s => {
+                const startTimeStr = s.time.split(" - ")[0];
+                const slotStartTime = parseTimeString(startTimeStr, today);
+                if (slotStartTime && slotStartTime < now) {
+                    return { ...s, isPast: true };
+                }
+                return s;
+            });
+        }
+
+        if (availableSlots.length === 0) {
+            listContainer.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 20px 0;">No available slots left for today. Please select another date.</p>`;
+            return;
+        }
+
+        listContainer.innerHTML = availableSlots.map(s => {
+            const isUnavailable = s.isBooked || s.isPast;
+            const btnClass = isUnavailable ? 'booked' : (this.state.slotId === s.id ? 'selected' : '');
+            const badgeText = s.isPast ? 'Passed' : (s.isBooked ? 'Booked' : 'Available');
+
+            return `
+                <button class="slot-btn ${btnClass}" data-id="${s.id}" data-time="${s.time}" ${isUnavailable ? 'disabled' : ''}>
+                    <span>${s.time}</span>
+                    <span class="slot-status-badge">${badgeText}</span>
+                </button>
+            `;
+        }).join('');
+
+        listContainer.querySelectorAll(".slot-btn:not(.booked)").forEach(btn => {
+            btn.addEventListener("click", () => {
+                listContainer.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("selected"));
+                btn.classList.add("selected");
+
+                this.state.slotId = btn.getAttribute("data-id");
+                this.state.slotTime = btn.getAttribute("data-time");
+
+                // Show booking type selection after slot is chosen
+                const bookingTypeContainer = document.getElementById("booking-type-container");
+                if (bookingTypeContainer) {
+                    bookingTypeContainer.style.display = "block";
+                    bookingTypeContainer.style.animation = "fadeIn 0.4s ease-out";
+                    // Scroll into view for better UX
+                    bookingTypeContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+
+                    // Booking Type selection listeners
+                    const standardBtn = document.getElementById("booking-type-standard");
+                    const comboBtn = document.getElementById("booking-type-combo");
+                    if (standardBtn) {
+                        standardBtn.addEventListener("click", () => {
+                            this.state.bookingType = "standard";
+                            // Hide combo packages and custom details
+                            const comboContainer = document.getElementById("combo-packages-selection-container");
+                            if (comboContainer) comboContainer.style.display = "none";
+                            const customDetails = document.getElementById("combo-custom-details-container");
+                            if (customDetails) customDetails.style.display = "none";
+                            // Show standard details inputs
+                            const standardDetails = document.getElementById("standard-details-container");
+                            if (standardDetails) standardDetails.style.display = "block";
+                            // Hide combo details if visible
+                            if (customDetails) customDetails.style.display = "none";
+                            setTimeout(() => { if (typeof this.checkStep2Completion === 'function') this.checkStep2Completion(); }, 300);
+                        });
+                    }
+                    if (comboBtn) {
+                        comboBtn.addEventListener("click", () => {
+                            this.state.bookingType = "combo";
+                            const standardDetails = document.getElementById("standard-details-container");
+                            if (standardDetails) standardDetails.style.display = "none";
+                            const comboContainer = document.getElementById("combo-packages-selection-container");
+                            if (comboContainer) comboContainer.style.display = "block";
+                            // Ensure custom details hidden until a package is selected
+                            const customDetails = document.getElementById("combo-custom-details-container");
+                            if (customDetails) customDetails.style.display = "none";
+                        });
+                    }
+                    // Combo package selection listeners
+                    const comboCards = document.querySelectorAll(".combo-card");
+                    comboCards.forEach(card => {
+                        card.addEventListener("click", () => {
+                            // Mark selected
+                            comboCards.forEach(c => c.classList.remove("selected"));
+                            card.classList.add("selected");
+                            // Store selected combo id and price
+                            this.state.bookingComboId = card.getAttribute("data-combo-id");
+                            this.state.bookingComboPrice = parseInt(card.getAttribute("data-price"), 10);
+                            // Show custom details inputs
+                            const customDetails = document.getElementById("combo-custom-details-container");
+                            if (customDetails) customDetails.style.display = "block";
+                            setTimeout(() => this.checkStep2Completion(), 300);
+                        });
+                    });
+                }
+            });
+        });
+    }
+
     async loadTimeSlots(dateString) {
         const listContainer = document.getElementById("slots-grid-container");
         if (!listContainer) return;
 
         listContainer.innerHTML = `<div class="spinner" style="width: 30px; height: 30px; margin: 20px auto;"></div>`;
 
+        // Expose render function for background/instant updates
+        window.updateSlotsUI = (slots) => {
+            this.renderTimeSlotsList(slots, dateString);
+        };
+
         try {
             const slots = await window.AppAPI.fetchSlotsAvailability(this.state.venueId, dateString);
-
-            // Filter out past slots if date is today
-            const today = new Date();
-            const todayString = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
-            const isToday = dateString === todayString;
-            const now = new Date();
-
-            const parseTimeString = (timeStr, baseDate) => {
-                const parts = timeStr.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
-                if (!parts) return null;
-                let hours = parseInt(parts[1], 10);
-                const minutes = parseInt(parts[2], 10);
-                const ampm = parts[3].toUpperCase();
-
-                if (ampm === "PM" && hours < 12) hours += 12;
-                if (ampm === "AM" && hours === 12) hours = 0;
-
-                const d = new Date(baseDate);
-                d.setHours(hours, minutes, 0, 0);
-                return d;
-            };
-
-            let availableSlots = slots;
-            if (isToday) {
-                availableSlots = slots.map(s => {
-                    const startTimeStr = s.time.split(" - ")[0];
-                    const slotStartTime = parseTimeString(startTimeStr, today);
-                    if (slotStartTime && slotStartTime < now) {
-                        return { ...s, isPast: true };
-                    }
-                    return s;
-                });
-            }
-
-            if (availableSlots.length === 0) {
-                listContainer.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 20px 0;">No available slots left for today. Please select another date.</p>`;
-                return;
-            }
-
-            listContainer.innerHTML = availableSlots.map(s => {
-                const isUnavailable = s.isBooked || s.isPast;
-                const btnClass = isUnavailable ? 'booked' : (this.state.slotId === s.id ? 'selected' : '');
-                const badgeText = s.isPast ? 'Passed' : (s.isBooked ? 'Booked' : 'Available');
-
-                return `
-                    <button class="slot-btn ${btnClass}" data-id="${s.id}" data-time="${s.time}" ${isUnavailable ? 'disabled' : ''}>
-                        <span>${s.time}</span>
-                        <span class="slot-status-badge">${badgeText}</span>
-                    </button>
-                `;
-            }).join('');
-
-            listContainer.querySelectorAll(".slot-btn:not(.booked)").forEach(btn => {
-                btn.addEventListener("click", () => {
-                    listContainer.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("selected"));
-                    btn.classList.add("selected");
-
-                    this.state.slotId = btn.getAttribute("data-id");
-                    this.state.slotTime = btn.getAttribute("data-time");
-
-                    // Show booking type selection after slot is chosen
-                    const bookingTypeContainer = document.getElementById("booking-type-container");
-                    if (bookingTypeContainer) {
-                        bookingTypeContainer.style.display = "block";
-                        bookingTypeContainer.style.animation = "fadeIn 0.4s ease-out";
-                        // Scroll into view for better UX
-                        bookingTypeContainer.scrollIntoView({ behavior: "smooth", block: "start" });
-
-                        // Booking Type selection listeners
-                        const standardBtn = document.getElementById("booking-type-standard");
-                        const comboBtn = document.getElementById("booking-type-combo");
-                        if (standardBtn) {
-                            standardBtn.addEventListener("click", () => {
-                                this.state.bookingType = "standard";
-                                // Hide combo packages and custom details
-                                const comboContainer = document.getElementById("combo-packages-selection-container");
-                                if (comboContainer) comboContainer.style.display = "none";
-                                const customDetails = document.getElementById("combo-custom-details-container");
-                                if (customDetails) customDetails.style.display = "none";
-                                // Show standard details inputs
-                                const standardDetails = document.getElementById("standard-details-container");
-                                if (standardDetails) standardDetails.style.display = "block";
-                                // Hide combo details if visible
-                                if (customDetails) customDetails.style.display = "none";
-                                setTimeout(() => { if (typeof this.checkStep2Completion === 'function') this.checkStep2Completion(); }, 300);
-                            });
-                        }
-                        if (comboBtn) {
-                            comboBtn.addEventListener("click", () => {
-                                this.state.bookingType = "combo";
-                                const comboContainer = document.getElementById("combo-packages-selection-container");
-                                if (comboContainer) comboContainer.style.display = "block";
-                                // Ensure custom details hidden until a package is selected
-                                const customDetails = document.getElementById("combo-custom-details-container");
-                                if (customDetails) customDetails.style.display = "none";
-                            });
-                        }
-                        // Combo package selection listeners
-                        const comboCards = document.querySelectorAll(".combo-card");
-                        comboCards.forEach(card => {
-                            card.addEventListener("click", () => {
-                                // Mark selected
-                                comboCards.forEach(c => c.classList.remove("selected"));
-                                card.classList.add("selected");
-                                // Store selected combo id and price
-                                this.state.bookingComboId = card.getAttribute("data-combo-id");
-                                this.state.bookingComboPrice = parseInt(card.getAttribute("data-price"), 10);
-                                // Show custom details inputs
-                                const customDetails = document.getElementById("combo-custom-details-container");
-                                if (customDetails) customDetails.style.display = "block";
-                                setTimeout(() => this.checkStep2Completion(), 300);
-                            });
-                        });
-                    }
-                });
-            });
+            this.renderTimeSlotsList(slots, dateString);
         } catch (err) {
             listContainer.innerHTML = `
                 <p style="color: var(--danger); text-align: center; font-size: 0.9rem; padding: 20px 0; line-height: 1.4;">

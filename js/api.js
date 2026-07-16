@@ -66,57 +66,66 @@ const API = {
         return Promise.resolve(fallback);
     },
 
-    // Fetch Available Slots for a given Venue and Date (Server synced with fast timeout fallback)
+    // Fetch Available Slots (Instant UI + Background Sync)
     async fetchSlotsAvailability(venueId, date) {
-        const getSlotsLocal = (bookedSlotIds = []) => {
+        const getSlotsLocal = () => {
             if (window.AppDB) return window.AppDB.getSlots(venueId);
             const list = window.AppDB_SEED_DATA ? window.AppDB_SEED_DATA.slots : [];
             return list.filter(s => s.venueId === venueId);
         };
 
-        // Helper to map slots status
-        const mapSlots = (bookedSlotIds) => {
-            const slots = getSlotsLocal();
-            return slots.map(s => {
-                const isBooked = bookedSlotIds.includes(s.id);
-                return { ...s, isBooked };
-            });
+        const mapSlots = (bookedSlotIds = []) => {
+            return getSlotsLocal().map(slot => ({
+                ...slot,
+                isBooked: bookedSlotIds.includes(slot.id)
+            }));
         };
 
-        // Try to fetch with a fast timeout (600ms)
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 600);
+        // -----------------------------
+        // STEP 1 : Show cached data instantly
+        // -----------------------------
+        let localBookedIds = [];
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/bookings/booked-slots?venueId=${venueId}&date=${encodeURIComponent(date)}`, {
-                signal: controller.signal
-            });
-            clearTimeout(timeoutId);
+            if (window.AppDB) {
+                const bookings = window.AppDB.getBookings() || [];
 
-            if (!res.ok) {
-                throw new Error("Failed to fetch slots");
+                localBookedIds = bookings
+                    .filter(b =>
+                        b.venueId === venueId &&
+                        b.date === date &&
+                        ["approved", "pending", "completed"].includes(b.status)
+                    )
+                    .map(b => b.slotId);
             }
-            const bookedSlotIds = await res.json();
-            return mapSlots(bookedSlotIds);
         } catch (e) {
-            clearTimeout(timeoutId);
-            console.warn("Using offline / cached slot availability database due to slow response or startup latency:", e);
-
-            // Fallback: Check local bookings in AppDB memory cache
-            let localBookedIds = [];
-            try {
-                if (window.AppDB) {
-                    const bookings = window.AppDB.getBookings() || [];
-                    localBookedIds = bookings
-                        .filter(b => b.venueId === venueId && b.date === date && (b.status === "approved" || b.status === "pending" || b.status === "completed"))
-                        .map(b => b.slotId);
-                }
-            } catch (err) {
-                console.error("Local database read error:", err);
-            }
-
-            return mapSlots(localBookedIds);
+            console.error(e);
         }
+
+        const instantSlots = mapSlots(localBookedIds);
+
+        // -----------------------------
+        // STEP 2 : Fetch latest slots in background
+        // -----------------------------
+        fetch(
+            `${API_BASE_URL}/api/bookings/booked-slots?venueId=${venueId}&date=${encodeURIComponent(date)}`
+        )
+            .then(res => {
+                if (!res.ok) throw new Error("Failed to fetch slots");
+                return res.json();
+            })
+            .then(bookedSlotIds => {
+                // Update local cache
+                if (window.updateSlotsUI) {
+                    window.updateSlotsUI(mapSlots(bookedSlotIds));
+                }
+            })
+            .catch(err => {
+                console.warn("Background slot sync failed:", err.message);
+            });
+
+        // Return immediately
+        return instantSlots;
     },
 
     // Validate Coupon Code (Local)
