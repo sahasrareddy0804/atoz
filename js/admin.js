@@ -149,10 +149,64 @@ class AdminDashboard {
     async loadDashboardStats() {
         try {
             const bookings = await window.AppAPI.fetchAdminBookings();
-            const totalRevenue = bookings.filter(b => b.status === "approved" || b.status === "completed").reduce((sum, b) => sum + b.total, 0);
+            
+            const parseDateDMY = (dateStr) => {
+                if (!dateStr) return null;
+                const parts = dateStr.split('/');
+                if (parts.length !== 3) return null;
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1; // 0-indexed month
+                const year = parseInt(parts[2], 10);
+                return new Date(year, month, day);
+            };
+
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+
+            // Start of current week (Sunday 00:00:00)
+            const getStartOfWeek = (d) => {
+                const date = new Date(d);
+                const day = date.getDay();
+                const diff = date.getDate() - day;
+                return new Date(date.setDate(diff));
+            };
+            const startOfWeek = getStartOfWeek(today);
+            startOfWeek.setHours(0, 0, 0, 0);
+            
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+            let weeklyRevenue = 0;
+            let monthlyRevenue = 0;
+            let totalRevenue = 0;
+
+            bookings.forEach(b => {
+                if (b.status === "approved" || b.status === "completed") {
+                    const bookingTotal = typeof b.total === 'number' ? b.total : parseFloat(b.total || 0);
+                    totalRevenue += bookingTotal;
+
+                    const bookingDate = parseDateDMY(b.date);
+                    if (bookingDate) {
+                        // Check if in current week
+                        if (bookingDate >= startOfWeek && bookingDate < endOfWeek) {
+                            weeklyRevenue += bookingTotal;
+                        }
+                        // Check if in current month
+                        if (bookingDate.getMonth() === currentMonth && bookingDate.getFullYear() === currentYear) {
+                            monthlyRevenue += bookingTotal;
+                        }
+                    }
+                }
+            });
+
             document.getElementById("stat-total-bookings").textContent = bookings.length;
+            document.getElementById("stat-weekly-revenue").textContent = `₹${weeklyRevenue.toLocaleString()}`;
+            document.getElementById("stat-monthly-revenue").textContent = `₹${monthlyRevenue.toLocaleString()}`;
             document.getElementById("stat-total-revenue").textContent = `₹${totalRevenue.toLocaleString()}`;
-        } catch (err) {}
+        } catch (err) {
+            console.error("Error loading dashboard stats:", err);
+        }
     }
 
     async loadManualPayments() {
