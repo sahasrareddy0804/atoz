@@ -148,6 +148,24 @@ class AdminDashboard {
 
     async loadDashboardStats() {
         try {
+            const monthSelect = document.getElementById("filter-month");
+            const yearSelect = document.getElementById("filter-year");
+
+            // Initialize defaults and listeners if not already bound
+            if (monthSelect && !monthSelect.dataset.listenerBound) {
+                monthSelect.value = new Date().getMonth();
+                monthSelect.addEventListener("change", () => this.loadDashboardStats());
+                monthSelect.dataset.listenerBound = "true";
+            }
+            if (yearSelect && !yearSelect.dataset.listenerBound) {
+                yearSelect.value = new Date().getFullYear();
+                yearSelect.addEventListener("change", () => this.loadDashboardStats());
+                yearSelect.dataset.listenerBound = "true";
+            }
+
+            const selectedMonth = monthSelect ? parseInt(monthSelect.value, 10) : new Date().getMonth();
+            const selectedYear = yearSelect ? parseInt(yearSelect.value, 10) : new Date().getFullYear();
+
             const bookings = await window.AppAPI.fetchAdminBookings();
             
             const parseDateDMY = (dateStr) => {
@@ -161,49 +179,183 @@ class AdminDashboard {
             };
 
             const today = new Date();
-            const currentMonth = today.getMonth();
-            const currentYear = today.getFullYear();
 
-            // Start of current week (Sunday 00:00:00)
+            // Start of current calendar week (Sunday 00:00:00)
             const getStartOfWeek = (d) => {
                 const date = new Date(d);
                 const day = date.getDay();
                 const diff = date.getDate() - day;
                 return new Date(date.setDate(diff));
             };
-            const startOfWeek = getStartOfWeek(today);
-            startOfWeek.setHours(0, 0, 0, 0);
+            const startOfCurrentWeek = getStartOfWeek(today);
+            startOfCurrentWeek.setHours(0, 0, 0, 0);
             
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(endOfWeek.getDate() + 7);
+            const endOfCurrentWeek = new Date(startOfCurrentWeek);
+            endOfCurrentWeek.setDate(endOfCurrentWeek.getDate() + 7);
 
-            let weeklyRevenue = 0;
-            let monthlyRevenue = 0;
+            let currentWeeklyRevenue = 0;
+            let filteredMonthlyRevenue = 0;
+            let filteredYearlyRevenue = 0;
             let totalRevenue = 0;
+            let totalBookingsCount = 0;
+
+            // 5 weekly revenue buckets for the selected month/year
+            // Week 1: 1-7, Week 2: 8-14, Week 3: 15-21, Week 4: 22-28, Week 5: 29+
+            const weeklyBuckets = [0, 0, 0, 0, 0];
 
             bookings.forEach(b => {
                 if (b.status === "approved" || b.status === "completed") {
                     const bookingTotal = typeof b.total === 'number' ? b.total : parseFloat(b.total || 0);
                     totalRevenue += bookingTotal;
+                    totalBookingsCount++;
 
                     const bookingDate = parseDateDMY(b.date);
                     if (bookingDate) {
-                        // Check if in current week
-                        if (bookingDate >= startOfWeek && bookingDate < endOfWeek) {
-                            weeklyRevenue += bookingTotal;
+                        // 1. Current Live Week calculation for the top card
+                        if (bookingDate >= startOfCurrentWeek && bookingDate < endOfCurrentWeek) {
+                            currentWeeklyRevenue += bookingTotal;
                         }
-                        // Check if in current month
-                        if (bookingDate.getMonth() === currentMonth && bookingDate.getFullYear() === currentYear) {
-                            monthlyRevenue += bookingTotal;
+
+                        const bMonth = bookingDate.getMonth();
+                        const bYear = bookingDate.getFullYear();
+                        const bDay = bookingDate.getDate();
+
+                        // 2. Filtered Month/Year calculations
+                        if (bYear === selectedYear) {
+                            filteredYearlyRevenue += bookingTotal;
+
+                            if (bMonth === selectedMonth) {
+                                filteredMonthlyRevenue += bookingTotal;
+
+                                // Distribute into weekly breakdown buckets
+                                if (bDay <= 7) {
+                                    weeklyBuckets[0] += bookingTotal;
+                                } else if (bDay <= 14) {
+                                    weeklyBuckets[1] += bookingTotal;
+                                } else if (bDay <= 21) {
+                                    weeklyBuckets[2] += bookingTotal;
+                                } else if (bDay <= 28) {
+                                    weeklyBuckets[3] += bookingTotal;
+                                } else {
+                                    weeklyBuckets[4] += bookingTotal;
+                                }
+                            }
                         }
                     }
                 }
             });
 
-            document.getElementById("stat-total-bookings").textContent = bookings.length;
-            document.getElementById("stat-weekly-revenue").textContent = `₹${weeklyRevenue.toLocaleString()}`;
-            document.getElementById("stat-monthly-revenue").textContent = `₹${monthlyRevenue.toLocaleString()}`;
+            // Update stats cards in UI
+            document.getElementById("stat-weekly-revenue").textContent = `₹${currentWeeklyRevenue.toLocaleString()}`;
+            document.getElementById("stat-monthly-revenue").textContent = `₹${filteredMonthlyRevenue.toLocaleString()}`;
+            document.getElementById("stat-yearly-revenue").textContent = `₹${filteredYearlyRevenue.toLocaleString()}`;
             document.getElementById("stat-total-revenue").textContent = `₹${totalRevenue.toLocaleString()}`;
+            document.getElementById("stat-total-bookings").textContent = totalBookingsCount;
+
+            // Determine if we need to display Week 5
+            const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+            const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
+            const showWeek5 = daysInMonth > 28;
+
+            // Update weekly breakdown table
+            const tbody = document.getElementById("weekly-breakdown-tbody");
+            if (tbody) {
+                let tableHtml = `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 10px 0; color: #4a4a68;">Week 1 (1-7)</td>
+                        <td style="padding: 10px 0; text-align: right; font-weight: 600; color: #12121f;">₹${weeklyBuckets[0].toLocaleString()}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 10px 0; color: #4a4a68;">Week 2 (8-14)</td>
+                        <td style="padding: 10px 0; text-align: right; font-weight: 600; color: #12121f;">₹${weeklyBuckets[1].toLocaleString()}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 10px 0; color: #4a4a68;">Week 3 (15-21)</td>
+                        <td style="padding: 10px 0; text-align: right; font-weight: 600; color: #12121f;">₹${weeklyBuckets[2].toLocaleString()}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 10px 0; color: #4a4a68;">Week 4 (22-28)</td>
+                        <td style="padding: 10px 0; text-align: right; font-weight: 600; color: #12121f;">₹${weeklyBuckets[3].toLocaleString()}</td>
+                    </tr>
+                `;
+                if (showWeek5) {
+                    tableHtml += `
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px 0; color: #4a4a68;">Week 5 (29-${daysInMonth})</td>
+                            <td style="padding: 10px 0; text-align: right; font-weight: 600; color: #12121f;">₹${weeklyBuckets[4].toLocaleString()}</td>
+                        </tr>
+                    `;
+                }
+                tbody.innerHTML = tableHtml;
+            }
+
+            // Update Chart.js canvas
+            const ctx = document.getElementById("revenueChart");
+            if (ctx) {
+                if (this.revenueChartInstance) {
+                    this.revenueChartInstance.destroy();
+                }
+
+                const labels = ["Week 1", "Week 2", "Week 3", "Week 4"];
+                const chartData = [weeklyBuckets[0], weeklyBuckets[1], weeklyBuckets[2], weeklyBuckets[3]];
+                if (showWeek5) {
+                    labels.push("Week 5");
+                    chartData.push(weeklyBuckets[4]);
+                }
+
+                this.revenueChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Revenue',
+                            data: chartData,
+                            backgroundColor: 'rgba(124, 58, 237, 0.75)',
+                            borderColor: '#7c3aed',
+                            borderWidth: 1,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#f3f4f6'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return '₹' + value.toLocaleString();
+                                    },
+                                    color: '#8080a3',
+                                    font: {
+                                        family: 'Outfit'
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    color: '#8080a3',
+                                    font: {
+                                        family: 'Outfit'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
         } catch (err) {
             console.error("Error loading dashboard stats:", err);
         }
