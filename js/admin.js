@@ -197,19 +197,31 @@ class AdminDashboard {
             let filteredMonthlyRevenue = 0;
             let filteredYearlyRevenue = 0;
             let totalRevenue = 0;
-            let totalBookingsCount = 0;
+            
+            let weeklyBookingsCount = 0;
+            let monthlyBookingsCount = 0;
 
             // 5 weekly revenue buckets for the selected month/year
             // Week 1: 1-7, Week 2: 8-14, Week 3: 15-21, Week 4: 22-28, Week 5: 29+
             const weeklyBuckets = [0, 0, 0, 0, 0];
 
             bookings.forEach(b => {
+                const bookingDate = parseDateDMY(b.date);
+                if (bookingDate) {
+                    if (bookingDate >= startOfCurrentWeek && bookingDate < endOfCurrentWeek) {
+                        weeklyBookingsCount++;
+                    }
+                    const bMonth = bookingDate.getMonth();
+                    const bYear = bookingDate.getFullYear();
+                    if (bYear === selectedYear && bMonth === selectedMonth) {
+                        monthlyBookingsCount++;
+                    }
+                }
+
                 if (b.status === "approved" || b.status === "completed") {
                     const bookingTotal = typeof b.total === 'number' ? b.total : parseFloat(b.total || 0);
                     totalRevenue += bookingTotal;
-                    totalBookingsCount++;
 
-                    const bookingDate = parseDateDMY(b.date);
                     if (bookingDate) {
                         // 1. Current Live Week calculation for the top card
                         if (bookingDate >= startOfCurrentWeek && bookingDate < endOfCurrentWeek) {
@@ -250,6 +262,9 @@ class AdminDashboard {
             document.getElementById("stat-monthly-revenue").textContent = `₹${filteredMonthlyRevenue.toLocaleString()}`;
             document.getElementById("stat-yearly-revenue").textContent = `₹${filteredYearlyRevenue.toLocaleString()}`;
             document.getElementById("stat-total-revenue").textContent = `₹${totalRevenue.toLocaleString()}`;
+            
+            document.getElementById("stat-weekly-bookings").textContent = weeklyBookingsCount;
+            document.getElementById("stat-monthly-bookings").textContent = monthlyBookingsCount;
             document.getElementById("stat-total-bookings").textContent = bookings.length;
 
             // Determine if we need to display Week 5

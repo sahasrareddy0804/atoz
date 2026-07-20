@@ -136,14 +136,15 @@ section {
 
 .btn-primary {
     background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-dark) 100%);
-    color: #070709;
+    color: #ffffff;
     border: none;
-    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
 }
 
 .btn-primary:hover {
     background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold-primary) 100%);
-    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+    color: #ffffff;
     transform: translateY(-2px);
 }
 
