@@ -253,10 +253,11 @@ header.scrolled {
 
 .nav-link {
     font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--text-secondary);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
     position: relative;
     padding: 5px 0;
+    transition: var(--transition-fast);
 }
 
 .nav-link::after {
@@ -271,11 +272,19 @@ header.scrolled {
 }
 
 .nav-link:hover, .nav-link.active {
-    color: var(--text-primary);
+    color: #ffffff;
 }
 
 .nav-link:hover::after, .nav-link.active::after {
     width: 100%;
+}
+
+header.scrolled .nav-link {
+    color: var(--text-secondary);
+}
+
+header.scrolled .nav-link:hover, header.scrolled .nav-link.active {
+    color: var(--gold-primary);
 }
 
 .mobile-menu-toggle {
@@ -286,6 +295,10 @@ header.scrolled {
 }
 
 .mobile-menu-toggle svg {
+    stroke: #ffffff;
+}
+
+header.scrolled .mobile-menu-toggle svg {
     stroke: var(--text-primary);
 }
 
