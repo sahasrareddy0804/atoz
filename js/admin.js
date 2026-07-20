@@ -250,7 +250,7 @@ class AdminDashboard {
             document.getElementById("stat-monthly-revenue").textContent = `₹${filteredMonthlyRevenue.toLocaleString()}`;
             document.getElementById("stat-yearly-revenue").textContent = `₹${filteredYearlyRevenue.toLocaleString()}`;
             document.getElementById("stat-total-revenue").textContent = `₹${totalRevenue.toLocaleString()}`;
-            document.getElementById("stat-total-bookings").textContent = totalBookingsCount;
+            document.getElementById("stat-total-bookings").textContent = bookings.length;
 
             // Determine if we need to display Week 5
             const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
