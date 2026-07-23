@@ -409,11 +409,6 @@ class BookingWizard {
                         window.AppMain.showToast("Please select the number of persons!", "error");
                         return false;
                     }
-                    const venue = window.AppDB.getVenues().find(v => v.id === this.state.venueId);
-                    if (venue && this.state.personCount > venue.capacity) {
-                        window.AppMain.showToast(`Selected screen capacity is limited to ${venue.capacity} guests!`, "error");
-                        return false;
-                    }
                 } else if (this.state.bookingType === "combo") {
                     if (!this.state.bookingComboId) {
                         window.AppMain.showToast("Please select a combo package!", "error");
