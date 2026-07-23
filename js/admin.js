@@ -101,12 +101,21 @@ class AdminDashboard {
             profileForm.addEventListener("submit", async (e) => {
                 e.preventDefault();
                 const newUser = document.getElementById("new-admin-user").value.trim();
+                const currPass = document.getElementById("current-admin-pass").value;
                 const newPass = document.getElementById("new-admin-pass").value;
+                
+                if (!newPass) {
+                    window.AppMain.showToast("New password cannot be empty.", "error");
+                    return;
+                }
+
                 try {
-                    await window.AppAPI.updateAdminCredentials(newUser, newPass);
-                    window.AppMain.showToast("Credentials updated successfully. Please login again.");
-                    await window.AppAPI.adminLogout();
-                    this.showLoginPanel();
+                    await window.AppAPI.updateAdminCredentials(newUser, currPass, newPass);
+                    window.AppMain.showToast("Credentials updated successfully. Please login again.", "success");
+                    setTimeout(async () => {
+                        await window.AppAPI.adminLogout();
+                        this.showLoginPanel();
+                    }, 1500);
                 } catch (err) {
                     window.AppMain.showToast(err.message, "error");
                 }

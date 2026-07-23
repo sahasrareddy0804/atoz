@@ -246,14 +246,14 @@ const API = {
     },
 
     // Admin Update Credentials (Server synced)
-    async updateAdminCredentials(newUsername, newPassword) {
+    async updateAdminCredentials(newUsername, currentPassword, newPassword) {
         try {
             const res = await fetchWithRetry(`${API_BASE_URL}/api/admin/update-credentials`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ username: newUsername, password: newPassword })
+                body: JSON.stringify({ username: newUsername, currentPassword, newPassword })
             });
 
             if (!res.ok) {
@@ -264,7 +264,7 @@ const API = {
             return await res.json();
         } catch (e) {
             console.error("Failed to update credentials on server:", e);
-            throw new Error("Unable to update credentials. The server is unreachable.");
+            throw e;
         }
     },
 

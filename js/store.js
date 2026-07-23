@@ -8,14 +8,15 @@ const SEED_DATA = {
     ],
     
     venues: [
-        { id: "v1", cityId: "hyd", name: "SR Nagar - Screen 1: Garden Theme", price: 1999, capacity: 20, rating: 4.9, image: "assets/images/screen1.jpg", description: "Enjoy a dreamy celebration inside Screen 1 featuring our lush green Garden Theme, beautiful floral creepers, glowing neon signs, and fairy-lit canopy seating." },
-        { id: "v2", cityId: "hyd", name: "SR Nagar - Screen 2: Heart Shape Decor", price: 1899, capacity: 20, rating: 4.8, image: "assets/images/screen2.jpg", description: "Indulge in pure romance inside Screen 2 featuring our Heart Shape Decor. Specially tailored with glowing neon hearts, aromatic candles, and low cozy seating." },
-        { id: "v3", cityId: "hyd", name: "SR Nagar - Screen 3: Ring Theme", price: 2099, capacity: 20, rating: 4.8, image: "assets/images/screen3.jpg", description: "A premium circular Ring Theme setup in Screen 3. Complete with a majestic metal ring backdrop decorated with gold and black balloon clusters, fairy lights, and welcome board." },
-        { id: "v4", cityId: "hyd", name: "SR Nagar - Screen 4: Big Screen Theatre", price: 2499, capacity: 20, rating: 4.9, image: "assets/images/screen4.jpg", description: "Experience cinema like never before in Screen 4's Big Screen Theatre. Features a colossal 180-inch screen, Dolby Atmos surround system, luxury leather recliners, and golden ambient lights." }
+        { id: "v1", cityId: "hyd", name: "SR Nagar - Screen 1: Garden Theme", price: 1999, capacity: 10, rating: 4.9, image: "assets/images/screen1.jpg", video: "assets/videos/video1.mp4", description: "Enjoy a dreamy celebration inside Screen 1 featuring our lush green Garden Theme, beautiful floral creepers, glowing neon signs, and fairy-lit canopy seating." },
+        { id: "v2", cityId: "hyd", name: "SR Nagar - Screen 2: Heart Shape Decor", price: 1899, capacity: 6, rating: 4.8, image: "assets/images/screen2.jpg", video: "assets/videos/video2.mp4", description: "Indulge in pure romance inside Screen 2 featuring our Heart Shape Decor. Specially tailored with glowing neon hearts, aromatic candles, and low cozy seating." },
+        { id: "v3", cityId: "hyd", name: "SR Nagar - Screen 3: Ring Theme", price: 2099, capacity: 8, rating: 4.8, image: "assets/images/screen3.jpg", video: "assets/videos/video3.mp4", description: "A premium circular Ring Theme setup in Screen 3. Complete with a majestic metal ring backdrop decorated with gold and black balloon clusters, fairy lights, and welcome board." },
+        { id: "v4", cityId: "hyd", name: "SR Nagar - Screen 4: Big Screen Theatre", price: 2499, capacity: 20, rating: 4.9, image: "assets/images/screen4.jpg", video: "assets/videos/video4.mp4", description: "Experience cinema like never before in Screen 4's Big Screen Theatre. Features a colossal 180-inch screen, Dolby Atmos surround system, luxury leather recliners, and golden ambient lights." }
     ],
     
     addons: [
         { id: "a1", name: "Fog entry", price: 500, icon: "assets/images/fog_entry.jpg", description: "Dramatic fog entry effect covering the floor." },
+        { id: "a4", name: "Candle entry", price: 500, icon: "assets/images/Candle_entry.png", description: "Enchanting path illuminated by beautiful candles." },
         { id: "a2_80", name: "Photography (80 Photos)", price: 800, icon: "assets/images/photography.jpg", description: "Professional photography session (80 photos)." },
         { id: "a2_40", name: "Photography (40 Photos)", price: 500, icon: "assets/images/photography.jpg", description: "Professional photography session (40 photos)." },
         { id: "a3", name: "Rose bouquet", price: 500, icon: "assets/images/rose_bouquet.jpg", description: "Beautiful fresh rose bouquet." },

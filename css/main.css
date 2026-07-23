@@ -492,14 +492,19 @@ header.scrolled .mobile-menu-toggle svg {
         right: -100%;
         width: 280px;
         height: 100vh;
-        background: rgba(255, 255, 255, 0.98);
+        background: rgba(10, 10, 15, 0.95);
         backdrop-filter: blur(20px);
         flex-direction: column;
         justify-content: center;
+        align-items: center;
         gap: 30px;
         transition: var(--transition-normal);
         z-index: 99;
         border-left: 1px solid var(--glass-border);
+    }
+
+    .nav-links .nav-link {
+        color: #ffffff;
     }
     
     .nav-links.active {

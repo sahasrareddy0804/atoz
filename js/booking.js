@@ -576,8 +576,15 @@ class BookingWizard {
                     <div class="venue-select-info">
                         <h4 class="venue-select-name">${v.name}</h4>
                         <div class="venue-select-meta">
-                            <span>👥 Max: ${v.capacity} guests</span>
+                            <span>👥 Capacity: ${v.capacity.toString().padStart(2, '0')} guests</span>
                             <span>⭐ ${v.rating} / 5</span>
+                        </div>
+                        <div class="venue-media-controls" style="margin-top: 10px; margin-bottom: 15px; display: flex; gap: 8px; width: 100%;">
+                            ${v.video ? `
+                                <button class="venue-media-btn play-video-btn" data-video="${v.video}" data-name="${v.name}" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-dark) 100%); border: none; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(212, 175, 55, 0.2);">
+                                    🎬 Theatre Video
+                                </button>
+                            ` : ''}
                         </div>
                         <p class="service-description" style="font-size: 0.85rem; line-height: 1.4; margin-bottom: 10px; flex-grow: 1;">
                             ${v.description}
@@ -600,7 +607,10 @@ class BookingWizard {
             `).join('');
 
             grid.querySelectorAll(".venue-select-card").forEach(card => {
-                card.addEventListener("click", () => {
+                card.addEventListener("click", (e) => {
+                    // If video button was clicked, don't trigger select
+                    if (e.target.closest(".venue-media-btn")) return;
+
                     grid.querySelectorAll(".venue-select-card").forEach(c => c.classList.remove("selected"));
                     card.classList.add("selected");
 
@@ -629,6 +639,16 @@ class BookingWizard {
 
                     // Smoothly scroll to the datetime container
                     datetimeContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+
+            // Bind Video Modal triggers
+            grid.querySelectorAll(".play-video-btn").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    const videoSrc = btn.getAttribute("data-video");
+                    const title = btn.getAttribute("data-name");
+                    this.showVideoModal(videoSrc, title);
                 });
             });
 
@@ -1214,7 +1234,7 @@ class BookingWizard {
 
         document.querySelectorAll('.person-count-btn').forEach(btn => {
             const count = parseInt(btn.getAttribute('data-count'), 10);
-            if (count > venue.capacity) {
+            if (count > 20) {
                 btn.disabled = true;
                 btn.style.opacity = '0.3';
                 btn.style.cursor = 'not-allowed';
@@ -1472,6 +1492,76 @@ class BookingWizard {
             }
         } finally {
             window.AppMain.showLoader(false);
+        }
+    }
+
+    showVideoModal(src, title) {
+        let modal = document.getElementById("theatre-video-modal");
+        if (!modal) {
+            modal = document.createElement("div");
+            modal.id = "theatre-video-modal";
+            modal.className = "custom-modal-overlay";
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            modal.innerHTML = `
+                <div class="glass-card" style="width: 90%; max-width: 700px; padding: 20px; border-radius: 12px; background: #0a0a0f; border: 1px solid var(--glass-border); position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: left;">
+                    <button class="close-video-modal" style="position: absolute; top: 12px; right: 15px; background: none; border: none; font-size: 2rem; color: #fff; cursor: pointer; z-index: 10;">&times;</button>
+                    <h3 class="video-modal-title gold-gradient-text" style="margin-top: 0; margin-bottom: 15px; font-size: 1.25rem; font-weight: 700;">Theatre Video</h3>
+                    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px;">
+                        <video id="theatre-modal-player" controls autoplay style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; outline: none; background: #000;">
+                            <source src="" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            const closeBtn = modal.querySelector(".close-video-modal");
+            closeBtn.addEventListener("click", () => this.hideVideoModal());
+            modal.addEventListener("click", (e) => {
+                if (e.target === modal) this.hideVideoModal();
+            });
+        }
+
+        const videoPlayer = modal.querySelector("#theatre-modal-player");
+        const modalTitle = modal.querySelector(".video-modal-title");
+        modalTitle.textContent = title + " - Preview Video";
+        videoPlayer.src = src;
+        videoPlayer.load();
+
+        modal.style.display = "flex";
+        setTimeout(() => {
+            modal.style.opacity = "1";
+        }, 10);
+    }
+
+    hideVideoModal() {
+        const modal = document.getElementById("theatre-video-modal");
+        if (modal) {
+            const videoPlayer = modal.querySelector("#theatre-modal-player");
+            if (videoPlayer) {
+                videoPlayer.pause();
+                videoPlayer.src = "";
+            }
+            modal.style.opacity = "0";
+            setTimeout(() => {
+                modal.style.display = "none";
+            }, 300);
         }
     }
 }

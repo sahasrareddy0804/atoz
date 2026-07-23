@@ -161,10 +161,12 @@
 }
 
 .venue-select-img {
-    height: 180px;
+    aspect-ratio: 16 / 10;
     width: 100%;
     object-fit: cover;
+    object-position: center;
     border-bottom: 1px solid var(--glass-border);
+    transition: transform var(--transition-normal);
 }
 
 .venue-select-info {

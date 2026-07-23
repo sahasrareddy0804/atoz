@@ -810,16 +810,25 @@ app.get('/api/admin/run-migration', async (req, res) => {
 
 // 8. Admin Update Credentials
 app.post('/api/admin/update-credentials', async (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) {
-        return res.status(400).json({ error: "Username and password cannot be empty." });
+    const { username, currentPassword, newPassword } = req.body;
+    
+    if (!username) {
+        return res.status(400).json({ error: "Username cannot be empty." });
+    }
+    if (!newPassword || newPassword.trim() === "") {
+        return res.status(400).json({ error: "New password is empty" });
     }
 
     try {
-        await db.updateAdmin({ username, password });
-        res.json({ success: true });
+        const admin = await db.getAdmin();
+        if (currentPassword !== admin.password) {
+            return res.status(400).json({ error: "Incorrect current password" });
+        }
+
+        await db.updateAdmin({ username, password: newPassword });
+        res.json({ success: true, message: "Password updated successfully" });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: "Server/database errors: " + error.message });
     }
 });
 
