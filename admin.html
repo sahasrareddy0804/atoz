@@ -179,9 +179,23 @@
         }
         .receipt-btn:hover { background: #3b5bdb; }
         
-        .action-btn { border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        .action-btn { 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            color: white; 
+            font-weight: bold; 
+            font-size: 0.95rem; 
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+        .action-btn:active {
+            transform: scale(0.97);
+        }
         .btn-approve { background: #10b981; }
+        .btn-approve:hover { background: #059669; }
         .btn-reject { background: #ef4444; }
+        .btn-reject:hover { background: #dc2626; }
         
         .screenshot-img { max-width: 100%; border-radius: 8px; margin-top: 10px; }
 
