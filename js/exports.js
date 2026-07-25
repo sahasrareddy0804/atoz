@@ -55,7 +55,7 @@ const EXPORTS = {
         // Table Data mapping exactly to the specification order
         const tableData = [
             ["Theater / Screen", booking.venueName || "N/A"],
-            ["Address", "194a, 4th cross, Kalyan Nagar Chowrasta, Vengal Rao Nagar Rd,\nKalyan Nagar Phase 1, Hyderabad, Telangana 500045"],
+            ["Address", "194a, 4th floor, Kalyan Nagar Chowrasta, Vengal Rao Nagar Rd,\nKalyan Nagar Phase 1, Hyderabad, Telangana 500045"],
             ["Booked on", bookedOnDate],
             ["Name", booking.customerName || "N/A"],
             ["Email", booking.customerEmail || "N/A"],

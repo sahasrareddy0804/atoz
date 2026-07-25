@@ -758,7 +758,7 @@ class AdminDashboard {
                         <tr>
                             <td colspan="2" style="padding:10px; border:1px solid #ddd; color:#666; font-size: 0.85rem;">
                                 <strong>${b.venueName}</strong><br>
-                                194a, 4th cross, Kalyan Nagar Chowrasta, Vengal Rao Nagar Rd,<br>
+                                194a, 4th floor, Kalyan Nagar Chowrasta, Vengal Rao Nagar Rd,<br>
                                 Kalyan Nagar Phase 1, Hyderabad, Telangana 500045 (8123496627)
                             </td>
                         </tr>
