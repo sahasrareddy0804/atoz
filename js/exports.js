@@ -111,13 +111,13 @@ const EXPORTS = {
                 fillColor: [26, 82, 118], // Custom Blue Table Header Background
                 textColor: [255, 255, 255], // White
                 fontStyle: 'bold',
-                fontSize: 12,
-                cellPadding: 3.5
+                fontSize: 13,
+                cellPadding: 4.5
             },
             bodyStyles: {
                 textColor: [50, 50, 50],
-                fontSize: 11,
-                cellPadding: 3.2,
+                fontSize: 12,
+                cellPadding: 4.2,
                 fontStyle: 'normal'
             },
             columnStyles: {
@@ -133,10 +133,13 @@ const EXPORTS = {
                 lineWidth: 0 // Remove heavy borders between rows
             },
             didParseCell: function(data) {
-                // If it is the body section, first two rows (indices 0 and 1), and details column (index 1), make it bold.
-                if (data.section === 'body' && (data.row.index === 0 || data.row.index === 1) && data.column.index === 1) {
-                    data.cell.styles.fontStyle = 'bold';
-                    data.cell.styles.textColor = [30, 30, 30]; // slightly darker text color for bold styling
+                // If it is the body section and details column (index 1)
+                if (data.section === 'body' && data.column.index === 1) {
+                    // Bold the cells for Theater/Screen (index 0), Address (index 1), and Name (index 3)
+                    if (data.row.index === 0 || data.row.index === 1 || data.row.index === 3) {
+                        data.cell.styles.fontStyle = 'bold';
+                        data.cell.styles.textColor = [30, 30, 30]; // slightly darker text color for bold styling
+                    }
                 }
             }
         });
