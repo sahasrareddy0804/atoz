@@ -18,11 +18,11 @@ const EXPORTS = {
             format: 'a4'
         });
 
-        // Set Title (Left Aligned with Large top margin)
+        // Set Title (Left Aligned with tighter top margin)
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(28);
+        doc.setFontSize(22);
         doc.setTextColor(26, 82, 118); // Modern blue tone
-        doc.text("AToZ Celebrations - Booking Details", 15, 30);
+        doc.text("AToZ Celebrations - Booking Details", 15, 20);
 
         // Helper to extract specific cake addon if it exists
         let cakeReq = "None";
@@ -103,7 +103,7 @@ const EXPORTS = {
         ];
 
         doc.autoTable({
-            startY: 40,
+            startY: 28,
             head: [['Field', 'Details']],
             body: tableData,
             theme: 'striped', // clean striped rows (white and very light gray)
@@ -111,13 +111,13 @@ const EXPORTS = {
                 fillColor: [26, 82, 118], // Custom Blue Table Header Background
                 textColor: [255, 255, 255], // White
                 fontStyle: 'bold',
-                fontSize: 13,
-                cellPadding: 4.5
+                fontSize: 12,
+                cellPadding: 3
             },
             bodyStyles: {
                 textColor: [50, 50, 50],
-                fontSize: 12,
-                cellPadding: 4.2,
+                fontSize: 10.5,
+                cellPadding: 2.4,
                 fontStyle: 'normal'
             },
             columnStyles: {
@@ -127,7 +127,7 @@ const EXPORTS = {
             alternateRowStyles: {
                 fillColor: [248, 249, 250] // Very light gray alternating rows
             },
-            margin: { left: 15, right: 15, top: 40, bottom: 20 },
+            margin: { left: 15, right: 15, top: 25, bottom: 15 },
             styles: {
                 overflow: 'linebreak',
                 lineWidth: 0 // Remove heavy borders between rows
