@@ -54,7 +54,8 @@ const EXPORTS = {
 
         // Table Data mapping exactly to the specification order
         const tableData = [
-            ["Theater / Screen / Address", `${booking.venueName || "N/A"}\n194a, 4th cross, Kalyan Nagar Chowrasta, Vengal Rao Nagar Rd,\nKalyan Nagar Phase 1, Hyderabad, Telangana 500045`],
+            ["Theater / Screen", booking.venueName || "N/A"],
+            ["Address", "194a, 4th cross, Kalyan Nagar Chowrasta, Vengal Rao Nagar Rd,\nKalyan Nagar Phase 1, Hyderabad, Telangana 500045"],
             ["Booked on", bookedOnDate],
             ["Name", booking.customerName || "N/A"],
             ["Email", booking.customerEmail || "N/A"],
@@ -132,8 +133,8 @@ const EXPORTS = {
                 lineWidth: 0 // Remove heavy borders between rows
             },
             didParseCell: function(data) {
-                // If it is the body section, first row (index 0), and details column (index 1), make it bold.
-                if (data.section === 'body' && data.row.index === 0 && data.column.index === 1) {
+                // If it is the body section, first two rows (indices 0 and 1), and details column (index 1), make it bold.
+                if (data.section === 'body' && (data.row.index === 0 || data.row.index === 1) && data.column.index === 1) {
                     data.cell.styles.fontStyle = 'bold';
                     data.cell.styles.textColor = [30, 30, 30]; // slightly darker text color for bold styling
                 }
