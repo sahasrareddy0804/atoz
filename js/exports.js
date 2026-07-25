@@ -130,6 +130,13 @@ const EXPORTS = {
             styles: {
                 overflow: 'linebreak',
                 lineWidth: 0 // Remove heavy borders between rows
+            },
+            didParseCell: function(data) {
+                // If it is the body section, first row (index 0), and details column (index 1), make it bold.
+                if (data.section === 'body' && data.row.index === 0 && data.column.index === 1) {
+                    data.cell.styles.fontStyle = 'bold';
+                    data.cell.styles.textColor = [30, 30, 30]; // slightly darker text color for bold styling
+                }
             }
         });
 
