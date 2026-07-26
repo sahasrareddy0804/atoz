@@ -318,6 +318,14 @@ if (process.env.MONGODB_URI) {
                             partialFilterExpression: { status: { $in: ["pending", "approved"] } } 
                         }
                     );
+                    // Index on id field for fast single-booking lookup
+                    await this.bookings.createIndex({ id: 1 });
+                    // Index on createdAt for fast sort
+                    await this.bookings.createIndex({ createdAt: -1 });
+                    // Index on status for faster status filtering
+                    await this.bookings.createIndex({ status: 1 });
+                    // Index on customerPhone for client tracking queries
+                    await this.bookings.createIndex({ customerPhone: 1 });
                     console.log("MongoDB Partial Unique Index verified successfully.");
                 } catch (indexError) {
                     console.error("Index Initialization Failure:", indexError.message);
@@ -396,18 +404,26 @@ if (process.env.MONGODB_URI) {
                 if (!forceRefresh && this._bookingsCache && (Date.now() - this._bookingsCacheTime < 5000)) {
                     return this._bookingsCache;
                 }
-                const list = await this.bookings.find().toArray();
+
+                const t0 = Date.now();
+                // PERF: Exclude paymentScreenshot (base64, up to 5MB+) from list queries.
+                // This is the primary bottleneck. Screenshots are fetched individually via GET /api/bookings/:id.
+                const list = await this.bookings.find({}, { projection: { paymentScreenshot: 0 } }).toArray();
+                console.log(`[perf] MongoDB find (no screenshots): ${Date.now() - t0}ms, docs: ${list.length}`);
                 
                 for (let b of list) {
                     // Normalize MongoDB object to fit application model expectations
                     b.id = b.id || b._id.toString();
                 }
                 
-                // Apply auto status updates
+                // Apply auto status updates (runs in-memory, no DB calls unless changes needed)
+                const t1 = Date.now();
                 const { bookings: updatedList, updatedBookings } = applyAutoStatusUpdates(list);
+                console.log(`[perf] applyAutoStatusUpdates: ${Date.now() - t1}ms, changes: ${updatedBookings.length}`);
                 
                 // Save updates back to Mongo in bulk if there are any updates
                 if (updatedBookings.length > 0) {
+                    const t2 = Date.now();
                     const bulkOps = updatedBookings.map(b => ({
                         updateOne: {
                             filter: { _id: b._id },
@@ -415,10 +431,12 @@ if (process.env.MONGODB_URI) {
                         }
                     }));
                     await this.bookings.bulkWrite(bulkOps);
+                    console.log(`[perf] bulkWrite status updates: ${Date.now() - t2}ms`);
                 }
                 
                 this._bookingsCache = updatedList;
                 this._bookingsCacheTime = Date.now();
+                console.log(`[perf] getBookings total: ${Date.now() - t0}ms`);
                 return updatedList;
             }
 
@@ -578,8 +596,10 @@ app.get('/api/bookings/booked-slots', async (req, res) => {
 // 2. Get bookings (for client tracking or admin panel)
 app.get('/api/bookings', async (req, res) => {
     const { search, venueId, status, date, id, phone } = req.query;
+    const t0 = Date.now();
     try {
         let bookings = await db.getBookings();
+        console.log(`[perf] GET /api/bookings - db.getBookings(): ${Date.now() - t0}ms, count: ${bookings.length}`);
 
         // Client tracking specific booking
         if (id && phone) {
@@ -611,6 +631,7 @@ app.get('/api/bookings', async (req, res) => {
 
         // Sort by createdAt descending
         bookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        console.log(`[perf] GET /api/bookings total: ${Date.now() - t0}ms, returning: ${bookings.length}`);
         res.json(bookings);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -628,16 +649,25 @@ app.post('/api/bookings', async (req, res) => {
     }
 });
 
-// 3.5. Get a single booking by ID (Admin)
+// 3.5. Get a single booking by ID (Admin) - includes paymentScreenshot
 app.get('/api/bookings/:id', async (req, res) => {
     const { id } = req.params;
     try {
+        // For single booking, fetch directly from MongoDB with full fields including paymentScreenshot
+        if (db.bookings) {
+            // MongoDbProvider path: query by id field or _id
+            const { ObjectId } = require('mongodb');
+            const query = { $or: [{ id: id }] };
+            if (ObjectId.isValid(id)) query.$or.push({ _id: new ObjectId(id) });
+            const booking = await db.bookings.findOne(query);
+            if (!booking) return res.status(404).json({ error: "Booking not found" });
+            booking.id = booking.id || booking._id.toString();
+            return res.json(booking);
+        }
+        // FileDbProvider fallback: read full file (screenshots included)
         const bookings = await db.getBookings();
         const booking = bookings.find(b => b.id === id || (b._id && b._id.toString() === id));
-        
-        if (!booking) {
-            return res.status(404).json({ error: "Booking not found" });
-        }
+        if (!booking) return res.status(404).json({ error: "Booking not found" });
         res.json(booking);
     } catch (error) {
         res.status(500).json({ error: error.message });
