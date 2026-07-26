@@ -10,7 +10,7 @@ const API_BASE_URL =
     (["localhost", "127.0.0.1"].includes(window.location.hostname) || window.location.hostname.startsWith("192.168.") || window.location.hostname.endsWith(".local")
         ? "http://localhost:8000"
         : "https://a2z-backend-wdm7.onrender.com");
-async function fetchWithRetry(url, options = {}, retries = 5, delay = 3000) {
+async function fetchWithRetry(url, options = {}, retries = 5, delay = 1000) {
     for (let i = 0; i < retries; i++) {
         try {
             const res = await fetch(url, options);
