@@ -404,9 +404,15 @@ if (process.env.MONGODB_URI) {
                 // Apply auto status updates
                 const { bookings: updatedList, updatedBookings } = applyAutoStatusUpdates(list);
                 
-                // Save updates back to Mongo
-                for (let b of updatedBookings) {
-                    await this.bookings.updateOne({ _id: b._id }, { $set: { status: b.status } });
+                // Save updates back to Mongo in bulk if there are any updates
+                if (updatedBookings.length > 0) {
+                    const bulkOps = updatedBookings.map(b => ({
+                        updateOne: {
+                            filter: { _id: b._id },
+                            update: { $set: { status: b.status } }
+                        }
+                    }));
+                    await this.bookings.bulkWrite(bulkOps);
                 }
                 
                 return updatedList;
