@@ -392,9 +392,11 @@ if (process.env.MONGODB_URI) {
                 }
             }
 
-            async getBookings() {
+            async getBookings(forceRefresh = false) {
+                if (!forceRefresh && this._bookingsCache && (Date.now() - this._bookingsCacheTime < 5000)) {
+                    return this._bookingsCache;
+                }
                 const list = await this.bookings.find().toArray();
-                const now = new Date();
                 
                 for (let b of list) {
                     // Normalize MongoDB object to fit application model expectations
@@ -415,6 +417,8 @@ if (process.env.MONGODB_URI) {
                     await this.bookings.bulkWrite(bulkOps);
                 }
                 
+                this._bookingsCache = updatedList;
+                this._bookingsCacheTime = Date.now();
                 return updatedList;
             }
 
@@ -454,6 +458,7 @@ if (process.env.MONGODB_URI) {
 
                 try {
                     await this.bookings.insertOne(newBooking);
+                    this._bookingsCache = null;
                     return newBooking;
                 } catch (err) {
                     if (err.code === 11000) {
@@ -485,6 +490,7 @@ if (process.env.MONGODB_URI) {
                 }
 
                 await this.bookings.updateOne({ _id: booking._id }, { $set: { status } });
+                this._bookingsCache = null;
                 return { success: true, id, status };
             }
 
@@ -501,6 +507,7 @@ if (process.env.MONGODB_URI) {
                 
                 await this.bookings.updateOne({ _id: booking._id }, { $set: cleanUpdate });
                 const updated = await this.bookings.findOne({ _id: booking._id });
+                this._bookingsCache = null;
                 return updated;
             }
 
@@ -510,6 +517,7 @@ if (process.env.MONGODB_URI) {
                     query.$or.push({ _id: new ObjectId(id) });
                 }
                 const result = await this.bookings.deleteOne(query);
+                this._bookingsCache = null;
                 return result.deletedCount > 0;
             }
 
