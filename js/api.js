@@ -279,8 +279,23 @@ const API = {
         return Promise.resolve(true);
     },
 
-    // Admin Get Bookings with Filters & Searching (Server synced)
-    async fetchAdminBookings(filters = {}) {
+    // Admin Get Bookings with Filters & Searching (Server synced + Memory cached)
+    _bookingsCache: null,
+    _bookingsCacheTime: 0,
+
+    invalidateBookingsCache() {
+        this._bookingsCache = null;
+        this._bookingsCacheTime = 0;
+    },
+
+    async fetchAdminBookings(filters = {}, forceRefresh = false) {
+        const isDefaultFetch = !filters.search && (!filters.venueId || filters.venueId === 'all') && (!filters.status || filters.status === 'all') && !filters.date;
+        
+        // Return memory cache if available and fresh (< 10s)
+        if (isDefaultFetch && !forceRefresh && this._bookingsCache && (Date.now() - this._bookingsCacheTime < 10000)) {
+            return this._bookingsCache;
+        }
+
         try {
             let url = `${API_BASE_URL}/api/bookings?`;
             if (filters.search) url += `search=${encodeURIComponent(filters.search)}&`;
@@ -294,13 +309,20 @@ const API = {
             const bookings = await res.json();
 
             // Synchronize full list to window.AppDB if no search filter is applied
-            if (!filters.search && (!filters.venueId || filters.venueId === 'all') && (!filters.status || filters.status === 'all') && !filters.date) {
-                window.AppDB.write("bookings", bookings);
+            if (isDefaultFetch) {
+                this._bookingsCache = bookings;
+                this._bookingsCacheTime = Date.now();
+                if (window.AppDB) window.AppDB.write("bookings", bookings);
             }
 
             return bookings;
         } catch (e) {
             console.error("Failed to fetch bookings from server:", e);
+            // Fallback to local storage cache if server request fails
+            if (isDefaultFetch && window.AppDB) {
+                const cached = window.AppDB.getBookings();
+                if (cached && cached.length > 0) return cached;
+            }
             throw new Error("Unable to retrieve bookings from the server. Please verify the server is running.");
         }
     },
@@ -322,6 +344,7 @@ const API = {
             }
 
             const data = await res.json();
+            this.invalidateBookingsCache();
             window.AppDB.updateBookingStatus(id, status);
             return { success: true, id, status };
         } catch (e) {
