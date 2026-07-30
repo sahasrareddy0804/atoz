@@ -414,13 +414,7 @@ class BookingWizard {
                         window.AppMain.showToast("Please select a combo package!", "error");
                         return false;
                     }
-                    const decorSelect = document.getElementById("decor-type");
-                    const decorVal = decorSelect ? decorSelect.value : "";
-                    if (!decorVal) {
-                        window.AppMain.showToast("Please select a decoration theme type for the combo!", "error");
-                        return false;
-                    }
-                    this.state.decorType = decorVal;
+                    this.state.decorType = "Combo Package";
                 }
                 return true;
             case 3:
